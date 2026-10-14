@@ -120,7 +120,6 @@ class GuidelineBlocks
     /**
      * Text in each language, trimmed, with languages left blank dropped.
      *
-     * @param  mixed  $text
      * @return array<string, string>
      */
     public static function cleanText(mixed $text): array
