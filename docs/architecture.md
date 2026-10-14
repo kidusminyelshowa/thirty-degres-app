@@ -21,6 +21,7 @@ One Laravel application serves the React screens through Inertia, so there is no
 
 - **Pilot:** Laravel Cloud, Frankfurt region, with a monthly spending cap. Suitable for clients who accept data stored in Europe.
 - **In-country:** for banks, telcos and government covered by Proclamation 1321/2024, the same app runs on a server in Addis Ababa (e.g. Wingu Africa or Raxio) with Postgres and an S3-compatible store. Nothing in the code may depend on Laravel Cloud.
+- What the data laws require, what we do during the pilot, and the per-region plan are in [data-residency.md](data-residency.md).
 
 ## Tenant isolation
 
