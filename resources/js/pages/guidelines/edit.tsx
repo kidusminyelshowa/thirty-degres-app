@@ -10,15 +10,17 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import AlertError from '@/components/alert-error';
+import { LocalField, BlockEditor } from '@/components/guidelines/block-editor';
 import {
-    BilingualField,
-    BlockEditor,
-} from '@/components/guidelines/block-editor';
-import { Bi, BlockView } from '@/components/guidelines/block-view';
+    BlockView,
+    Local,
+    ReadingProvider,
+} from '@/components/guidelines/block-view';
 import {
     LanguageToggle,
     useReadingLanguage,
 } from '@/components/guidelines/language-toggle';
+import { LanguagesDialog } from '@/components/guidelines/languages-dialog';
 import { Button } from '@/components/ui/button';
 import {
     DropdownMenu,
@@ -37,21 +39,24 @@ import {
 import { useTranslation } from '@/lib/i18n';
 import { destroy, show, update } from '@/routes/workspaces/guidelines';
 import type {
-    Bilingual,
+    ContentLanguage,
     GuidelineAsset,
     GuidelineBlock,
     GuidelinePageSummary,
+    LocalText,
 } from '@/types';
 
 type Props = {
     page: {
         id: string;
-        title: Bilingual;
+        title: LocalText;
         blocks: GuidelineBlock[];
         published: boolean;
         hasChanges: boolean;
     };
     brand: { id: string; name: string };
+    languages: ContentLanguage[];
+    allLanguages: ContentLanguage[];
     pages: GuidelinePageSummary[];
     assets: Record<string, GuidelineAsset>;
     library: GuidelineAsset[];
@@ -64,12 +69,15 @@ type Props = {
         reorder: boolean;
         delete: boolean;
         create: boolean;
+        setLanguages: boolean;
     };
 };
 
 export default function EditGuidelinePage({
     page,
     brand,
+    languages,
+    allLanguages,
     assets,
     library,
     editedBy,
@@ -81,14 +89,14 @@ export default function EditGuidelinePage({
     const errors = usePage().props.errors as Record<string, string>;
     const ids: [string, string] = [workspace.slug, page.id];
 
-    const [title, setTitle] = useState<Bilingual>(page.title);
+    const [title, setTitle] = useState<LocalText>(page.title);
     const [blocks, setBlocks] = useState<GuidelineBlock[]>(page.blocks);
     const [saved, setSaved] = useState(() =>
         JSON.stringify([page.title, page.blocks]),
     );
     const [saving, setSaving] = useState(false);
     const [mode, setMode] = useState<'edit' | 'preview'>('edit');
-    const [language, setLanguage] = useReadingLanguage();
+    const [language, setLanguage] = useReadingLanguage(languages);
 
     const dirty = JSON.stringify([title, blocks]) !== saved;
 
@@ -131,7 +139,7 @@ export default function EditGuidelinePage({
     const save = () => {
         router.put(
             update.url(ids),
-            { title_en: title.en, title_am: title.am, blocks },
+            { title, blocks },
             {
                 preserveScroll: true,
                 onStart: () => setSaving(true),
@@ -165,7 +173,7 @@ export default function EditGuidelinePage({
 
     return (
         <>
-            <Head title={`${t('Edit')}: ${pageTitle(title, t)}`} />
+            <Head title={`${t('Edit')}: ${pageTitle(title, t, languages)}`} />
 
             <div className="sticky top-0 z-10 flex flex-wrap items-center justify-between gap-3 border-b bg-background/95 px-4 py-3 backdrop-blur md:px-6">
                 <div className="flex min-w-0 flex-col">
@@ -173,7 +181,7 @@ export default function EditGuidelinePage({
                         href={show(ids)}
                         className="text-sm text-muted-foreground hover:text-foreground"
                     >
-                        {brand.name} · {pageTitle(page.title, t)}
+                        {brand.name} · {pageTitle(page.title, t, languages)}
                     </Link>
                     <span className="text-xs text-muted-foreground">
                         {dirty
@@ -211,6 +219,13 @@ export default function EditGuidelinePage({
                             {t('Preview')}
                         </ToggleGroupItem>
                     </ToggleGroup>
+                    {can.setLanguages && (
+                        <LanguagesDialog
+                            brand={brand}
+                            languages={languages}
+                            allLanguages={allLanguages}
+                        />
+                    )}
                     <Button onClick={save} disabled={!dirty || saving}>
                         <Save />
                         {saving ? t('Saving…') : t('Save')}
@@ -218,162 +233,176 @@ export default function EditGuidelinePage({
                 </div>
             </div>
 
-            <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6">
-                {messages.length > 0 && (
-                    <AlertError
-                        errors={messages}
-                        title={t('This page was not saved.')}
-                    />
-                )}
-
-                {mode === 'preview' ? (
-                    <article className="flex flex-col gap-6">
-                        <LanguageToggle
-                            value={language}
-                            onChange={setLanguage}
+            <ReadingProvider language={language} languages={languages}>
+                <div className="mx-auto flex w-full max-w-5xl flex-col gap-6 p-4 md:p-6">
+                    {messages.length > 0 && (
+                        <AlertError
+                            errors={messages}
+                            title={t('This page was not saved.')}
                         />
-                        <header className="border-b pb-4">
-                            <Bi
-                                text={title}
-                                language={language}
-                                as="h1"
-                                className="text-4xl font-semibold tracking-tight"
-                                amClassName="font-medium tracking-normal"
-                            />
-                        </header>
-                        {blocks.map((block) => (
-                            <BlockView
-                                key={block.id}
-                                block={block}
-                                language={language}
-                                assets={allAssets}
-                            />
-                        ))}
-                    </article>
-                ) : (
-                    <>
-                        <BilingualField
-                            label={t('Page title')}
-                            value={title}
-                            onChange={setTitle}
-                            maxLength={120}
-                        />
-
-                        {blocks.map((block, index) => (
-                            <section
-                                key={block.id}
-                                className="flex flex-col gap-3 rounded-xl border bg-card p-4"
-                                aria-label={blockLabel(t, block.type)}
-                            >
-                                <div className="flex items-center justify-between gap-2">
-                                    <span className="text-sm font-medium text-muted-foreground">
-                                        {blockLabel(t, block.type)}
-                                    </span>
-                                    <div className="flex gap-1">
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            disabled={index === 0}
-                                            onClick={() => moveBlock(index, -1)}
-                                            aria-label={t('Move up')}
-                                        >
-                                            <ArrowUp />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            disabled={
-                                                index === blocks.length - 1
-                                            }
-                                            onClick={() => moveBlock(index, 1)}
-                                            aria-label={t('Move down')}
-                                        >
-                                            <ArrowDown />
-                                        </Button>
-                                        <Button
-                                            type="button"
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={() =>
-                                                setBlocks(
-                                                    blocks.filter(
-                                                        (_, i) => i !== index,
-                                                    ),
-                                                )
-                                            }
-                                            aria-label={t('Remove block')}
-                                        >
-                                            <Trash2 />
-                                        </Button>
-                                    </div>
-                                </div>
-                                <BlockEditor
-                                    block={block}
-                                    onChange={(next) => setBlock(index, next)}
-                                    library={library}
-                                />
-                            </section>
-                        ))}
-
-                        {blocks.length < 60 && (
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button variant="outline" className="w-fit">
-                                        <Plus />
-                                        {t('Add block')}
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="start">
-                                    {blockTypes.map((type) => (
-                                        <DropdownMenuItem
-                                            key={type}
-                                            onSelect={() =>
-                                                setBlocks([
-                                                    ...blocks,
-                                                    newBlock(type),
-                                                ])
-                                            }
-                                        >
-                                            {blockLabel(t, type)}
-                                        </DropdownMenuItem>
-                                    ))}
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                        )}
-                    </>
-                )}
-
-                <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
-                    <p className="text-sm text-muted-foreground">
-                        {can.publish
-                            ? t(
-                                  'Saved changes go live when you publish from the page view.',
-                              )
-                            : t(
-                                  'Saved changes go live when a Brand manager publishes them.',
-                              )}
-                    </p>
-                    {can.delete && (
-                        <Form
-                            {...destroy.form(ids)}
-                            onBefore={() =>
-                                window.confirm(
-                                    t(
-                                        'Delete this page? People on this brand will no longer see it.',
-                                    ),
-                                )
-                            }
-                        >
-                            <Button type="submit" variant="ghost">
-                                <Trash2 />
-                                {t('Delete page')}
-                            </Button>
-                        </Form>
                     )}
+
+                    {mode === 'preview' ? (
+                        <article className="flex flex-col gap-6">
+                            <LanguageToggle
+                                value={language}
+                                onChange={setLanguage}
+                                languages={languages}
+                            />
+                            <header className="border-b pb-4">
+                                <Local
+                                    text={title}
+                                    as="h1"
+                                    className="text-4xl font-semibold tracking-tight"
+                                    ethiopicClassName="font-medium tracking-normal"
+                                />
+                            </header>
+                            {blocks.map((block) => (
+                                <BlockView
+                                    key={block.id}
+                                    block={block}
+                                    assets={allAssets}
+                                />
+                            ))}
+                        </article>
+                    ) : (
+                        <>
+                            <LocalField
+                                label={t('Page title')}
+                                value={title}
+                                onChange={setTitle}
+                                maxLength={120}
+                            />
+
+                            {blocks.map((block, index) => (
+                                <section
+                                    key={block.id}
+                                    className="flex flex-col gap-3 rounded-xl border bg-card p-4"
+                                    aria-label={blockLabel(t, block.type)}
+                                >
+                                    <div className="flex items-center justify-between gap-2">
+                                        <span className="text-sm font-medium text-muted-foreground">
+                                            {blockLabel(t, block.type)}
+                                        </span>
+                                        <div className="flex gap-1">
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                disabled={index === 0}
+                                                onClick={() =>
+                                                    moveBlock(index, -1)
+                                                }
+                                                aria-label={t('Move up')}
+                                            >
+                                                <ArrowUp />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                disabled={
+                                                    index === blocks.length - 1
+                                                }
+                                                onClick={() =>
+                                                    moveBlock(index, 1)
+                                                }
+                                                aria-label={t('Move down')}
+                                            >
+                                                <ArrowDown />
+                                            </Button>
+                                            <Button
+                                                type="button"
+                                                variant="ghost"
+                                                size="icon"
+                                                onClick={() =>
+                                                    setBlocks(
+                                                        blocks.filter(
+                                                            (_, i) =>
+                                                                i !== index,
+                                                        ),
+                                                    )
+                                                }
+                                                aria-label={t('Remove block')}
+                                            >
+                                                <Trash2 />
+                                            </Button>
+                                        </div>
+                                    </div>
+                                    <BlockEditor
+                                        block={block}
+                                        onChange={(next) =>
+                                            setBlock(index, next)
+                                        }
+                                        library={library}
+                                    />
+                                </section>
+                            ))}
+
+                            {blocks.length < 60 && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button
+                                            variant="outline"
+                                            className="w-fit"
+                                        >
+                                            <Plus />
+                                            {t('Add block')}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="start">
+                                        {blockTypes.map((type) => (
+                                            <DropdownMenuItem
+                                                key={type}
+                                                onSelect={() =>
+                                                    setBlocks([
+                                                        ...blocks,
+                                                        newBlock(
+                                                            type,
+                                                            languages,
+                                                        ),
+                                                    ])
+                                                }
+                                            >
+                                                {blockLabel(t, type)}
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
+                        </>
+                    )}
+
+                    <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
+                        <p className="text-sm text-muted-foreground">
+                            {can.publish
+                                ? t(
+                                      'Saved changes go live when you publish from the page view.',
+                                  )
+                                : t(
+                                      'Saved changes go live when a Brand manager publishes them.',
+                                  )}
+                        </p>
+                        {can.delete && (
+                            <Form
+                                {...destroy.form(ids)}
+                                onBefore={() =>
+                                    window.confirm(
+                                        t(
+                                            'Delete this page? People on this brand will no longer see it.',
+                                        ),
+                                    )
+                                }
+                            >
+                                <Button type="submit" variant="ghost">
+                                    <Trash2 />
+                                    {t('Delete page')}
+                                </Button>
+                            </Form>
+                        )}
+                    </div>
                 </div>
-            </div>
+            </ReadingProvider>
         </>
     );
 }

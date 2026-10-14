@@ -196,6 +196,7 @@ Tests and CI must run as the restricted app role, not the `postgres` superuser, 
 ### What THI-37 built
 
 - Table `guideline_pages`, locked by row-level security and linked to its brand through `(workspace_id, brand_id)`. Each page keeps the working copy Editors change and the copy last published, which is all Viewers see.
+- Every text on a page is stored per language code. Each brand chooses its languages and their order (`brands.guideline_languages`, default Amharic then English) from `config/languages.php`: Amharic, English, Afaan Oromoo, Tigrinya, Somali, Swahili, Arabic (right to left), French and Afar so far. Only Brand managers who are staff change them.
 - The role table above for guidelines, in `GuidelinePagePolicy`: Viewers see published pages; Editors write and save drafts (partner Editors only pages they started); Brand managers publish and delete; staff Editors and Brand managers reorder pages.
 - A database trigger refuses `published_by = edited_by` unless the workspace has `allow_self_approval` on, the same rule as for files. Publishing also waits until every file on the page is approved, since Viewers could not see a draft file.
 - A page can only use files from its brand or the parent brand that the editor can see, and only font files as typefaces. Readers get only the files they may see.

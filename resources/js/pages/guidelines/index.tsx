@@ -1,23 +1,27 @@
 import { Head, Link, usePage } from '@inertiajs/react';
 import { BookOpen } from 'lucide-react';
+import { LanguagesDialog } from '@/components/guidelines/languages-dialog';
 import { NewPageDialog } from '@/components/guidelines/new-page-dialog';
 import Heading from '@/components/heading';
 import { pageTitle } from '@/lib/guidelines';
 import { useTranslation } from '@/lib/i18n';
 import { show } from '@/routes/workspaces/guidelines';
-import type { GuidelinePageSummary } from '@/types';
+import type { ContentLanguage, GuidelinePageSummary } from '@/types';
 
 type Props = {
     brands: {
         id: string;
         name: string;
         parentId: string | null;
+        languages: ContentLanguage[];
         pages: GuidelinePageSummary[];
         canCreate: boolean;
+        canSetLanguages: boolean;
     }[];
+    allLanguages: ContentLanguage[];
 };
 
-export default function GuidelinesIndex({ brands }: Props) {
+export default function GuidelinesIndex({ brands, allLanguages }: Props) {
     const { t } = useTranslation();
     const workspace = usePage().props.currentWorkspace!;
 
@@ -29,7 +33,7 @@ export default function GuidelinesIndex({ brands }: Props) {
                 <Heading
                     title={t('Guidelines')}
                     description={t(
-                        'How each brand looks and sounds, in Amharic and English.',
+                        'How each brand looks and sounds, in each of its languages.',
                     )}
                 />
 
@@ -73,17 +77,12 @@ export default function GuidelinesIndex({ brands }: Props) {
                                                     {index + 1}
                                                 </span>
                                                 <span>
-                                                    {pageTitle(page.title, t)}
-                                                </span>
-                                                {page.title.en &&
-                                                    page.title.am && (
-                                                        <span
-                                                            lang="am"
-                                                            className="text-muted-foreground"
-                                                        >
-                                                            {page.title.am}
-                                                        </span>
+                                                    {pageTitle(
+                                                        page.title,
+                                                        t,
+                                                        brand.languages,
                                                     )}
+                                                </span>
                                                 {!page.published && (
                                                     <span className="text-xs text-muted-foreground">
                                                         {t('Draft')}
@@ -94,12 +93,32 @@ export default function GuidelinesIndex({ brands }: Props) {
                                     ))}
                                 </ol>
                             )}
-                            {brand.canCreate && (
-                                <div className="mt-auto pt-2">
-                                    <NewPageDialog
-                                        brand={brand}
-                                        variant="outline"
-                                    />
+                            <p className="flex flex-wrap gap-x-2 text-xs text-muted-foreground">
+                                {brand.languages.map((language) => (
+                                    <span
+                                        key={language.code}
+                                        lang={language.code}
+                                        dir={language.dir}
+                                    >
+                                        {language.native}
+                                    </span>
+                                ))}
+                            </p>
+                            {(brand.canCreate || brand.canSetLanguages) && (
+                                <div className="mt-auto flex flex-wrap gap-2 pt-2">
+                                    {brand.canCreate && (
+                                        <NewPageDialog
+                                            brand={brand}
+                                            variant="outline"
+                                        />
+                                    )}
+                                    {brand.canSetLanguages && (
+                                        <LanguagesDialog
+                                            brand={brand}
+                                            languages={brand.languages}
+                                            allLanguages={allLanguages}
+                                        />
+                                    )}
                                 </div>
                             )}
                         </section>

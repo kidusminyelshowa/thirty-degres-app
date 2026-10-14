@@ -1,22 +1,27 @@
 import { Check, Copy, ImageOff, X } from 'lucide-react';
-import { useState } from 'react';
-import type { CSSProperties, ElementType } from 'react';
+import { createContext, useContext, useState } from 'react';
+import type { ElementType, ReactNode } from 'react';
 import {
+    directionOf,
     fontStack,
     hexToCmyk,
     hexToRgb,
     isBlank,
     pick,
+    scriptLabel,
+    scriptSpecimen,
     textOn,
+    written,
 } from '@/lib/guidelines';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type {
-    Bilingual,
     ColoursBlock,
+    ContentLanguage,
     DosDontsBlock,
     GuidelineAsset,
     GuidelineBlock,
+    LocalText,
     LogosBlock,
     ReadingLanguage,
     TypePairingBlock,
@@ -24,115 +29,141 @@ import type {
 
 type Assets = Record<string, GuidelineAsset>;
 
+type Reading = { language: ReadingLanguage; languages: ContentLanguage[] };
+
+const ReadingContext = createContext<Reading>({
+    language: 'all',
+    languages: [],
+});
+
 /**
- * Text written in both languages, shown as the reader chose. Amharic is
- * marked lang="am" so it gets the Ethiopic font and line height.
+ * Which language a page is read in, and the brand's languages in order.
  */
-export function Bi({
-    text,
+export function ReadingProvider({
     language,
+    languages,
+    children,
+}: Reading & { children: ReactNode }) {
+    return (
+        <ReadingContext.Provider value={{ language, languages }}>
+            {children}
+        </ReadingContext.Provider>
+    );
+}
+
+/**
+ * Text written in several languages, shown as the reader chose: one
+ * language (falling back to the brand's first language that has it), or
+ * every language in the brand's order. Each is marked with its lang and
+ * dir, so Ge'ez gets the Ethiopic font and Arabic runs right to left.
+ */
+export function Local({
+    text,
     as: Tag = 'p',
     className,
-    amClassName,
+    ethiopicClassName,
 }: {
-    text: Bilingual;
-    language: ReadingLanguage;
+    text: LocalText;
     as?: ElementType;
     className?: string;
-    amClassName?: string;
+    ethiopicClassName?: string;
 }) {
+    const { language, languages } = useContext(ReadingContext);
+
     if (isBlank(text)) {
         return null;
     }
 
-    if (language !== 'both') {
-        const value = pick(text, language);
-        const isAm = value === text.am && text.am.trim() !== '';
-
-        return (
-            <Tag
-                lang={isAm ? 'am' : 'en'}
-                className={cn(
-                    'whitespace-pre-line',
-                    className,
-                    isAm && amClassName,
-                )}
-            >
-                {value}
-            </Tag>
-        );
-    }
+    const entries: { code: string; value: string }[] =
+        language === 'all'
+            ? [
+                  ...languages.map((l) => l.code),
+                  ...Object.keys(text).filter(
+                      (code) => !languages.some((l) => l.code === code),
+                  ),
+              ]
+                  .map((code) => ({ code, value: written(text, code) }))
+                  .filter((entry) => entry.value !== '')
+            : [pick(text, language, languages)].filter(
+                  (entry): entry is { code: string; value: string } =>
+                      entry !== null,
+              );
 
     return (
         <>
-            {text.en.trim() !== '' && (
-                <Tag lang="en" className={cn('whitespace-pre-line', className)}>
-                    {text.en}
-                </Tag>
-            )}
-            {text.am.trim() !== '' && (
+            {entries.map(({ code, value }) => (
                 <Tag
-                    lang="am"
+                    key={code}
+                    lang={code}
+                    dir={directionOf(code, languages)}
                     className={cn(
                         'whitespace-pre-line',
                         className,
-                        amClassName,
+                        scriptOf(code, languages) === 'ethiopic' &&
+                            ethiopicClassName,
                     )}
                 >
-                    {text.am}
+                    {value}
                 </Tag>
-            )}
+            ))}
         </>
     );
 }
 
+/**
+ * The brand's languages, in its order.
+ */
+export function useBrandLanguages(): ContentLanguage[] {
+    return useContext(ReadingContext).languages;
+}
+
+function scriptOf(code: string, languages: ContentLanguage[]) {
+    return languages.find((l) => l.code === code)?.script;
+}
+
 export function BlockView({
     block,
-    language,
     assets,
 }: {
     block: GuidelineBlock;
-    language: ReadingLanguage;
     assets: Assets;
 }) {
     switch (block.type) {
         case 'heading':
             return (
                 <div className="flex flex-col gap-1 pt-4">
-                    <Bi
+                    <Local
                         text={block.text}
-                        language={language}
+
                         as="h2"
                         className="text-2xl font-semibold tracking-tight"
-                        amClassName="font-medium tracking-normal"
+                        ethiopicClassName="font-medium tracking-normal"
                     />
                 </div>
             );
         case 'text':
             return (
                 <div className="flex max-w-prose flex-col gap-3 text-base text-foreground/90">
-                    <Bi text={block.text} language={language} />
+                    <Local text={block.text} />
                 </div>
             );
         case 'colours':
-            return <ColoursView block={block} language={language} />;
+            return <ColoursView block={block} />;
         case 'type_pairing':
             return (
                 <TypePairingView
                     block={block}
-                    language={language}
+
                     assets={assets}
                 />
             );
         case 'logos':
-            return (
-                <LogosView block={block} language={language} assets={assets} />
-            );
+            return <LogosView block={block} assets={assets} />;
         case 'dos_donts':
             return (
                 <DosDontsView
                     block={block}
-                    language={language}
+
                     assets={assets}
                 />
             );
@@ -175,15 +206,7 @@ function AssetImage({
     );
 }
 
-function LogosView({
-    block,
-    language,
-    assets,
-}: {
-    block: LogosBlock;
-    language: ReadingLanguage;
-    assets: Assets;
-}) {
+function LogosView({ block, assets }: { block: LogosBlock; assets: Assets }) {
     return (
         <div className="grid gap-4 sm:grid-cols-2">
             {block.items.map((item, index) => (
@@ -200,7 +223,7 @@ function LogosView({
                             asset={
                                 item.assetId ? assets[item.assetId] : undefined
                             }
-                            alt={pick(item.caption, 'en')}
+                            alt={written(item.caption, 'en')}
                             className={cn(
                                 'h-full w-full',
                                 item.background === 'dark'
@@ -210,7 +233,7 @@ function LogosView({
                         />
                     </div>
                     <figcaption className="flex flex-col gap-0.5 text-sm text-muted-foreground">
-                        <Bi text={item.caption} language={language} as="span" />
+                        <Local text={item.caption} as="span" />
                     </figcaption>
                 </figure>
             ))}
@@ -218,13 +241,7 @@ function LogosView({
     );
 }
 
-function ColoursView({
-    block,
-    language,
-}: {
-    block: ColoursBlock;
-    language: ReadingLanguage;
-}) {
+function ColoursView({ block }: { block: ColoursBlock }) {
     const { t } = useTranslation();
 
     return (
@@ -253,9 +270,9 @@ function ColoursView({
                                 </span>
                             </div>
                             <div className="flex flex-col gap-1 p-3 text-sm">
-                                <Bi
+                                <Local
                                     text={swatch.name}
-                                    language={language}
+
                                     className="font-medium"
                                 />
                                 <CopyValue value={swatch.hex} />
@@ -270,9 +287,9 @@ function ColoursView({
                                 >
                                     CMYK ≈ {c} {m} {y} {k}
                                 </span>
-                                <Bi
+                                <Local
                                     text={swatch.note}
-                                    language={language}
+
                                     className="pt-1 text-xs text-muted-foreground"
                                 />
                             </div>
@@ -312,63 +329,62 @@ function CopyValue({ value }: { value: string }) {
 
 function TypePairingView({
     block,
-    language,
     assets,
 }: {
     block: TypePairingBlock;
-    language: ReadingLanguage;
     assets: Assets;
 }) {
     const { t } = useTranslation();
-    const latin: CSSProperties = {
-        fontFamily: fontStack(block.latin, 'latin', assets),
-        fontWeight: block.latin.weight,
-    };
-    const ethiopic: CSSProperties = {
-        fontFamily: fontStack(block.ethiopic, 'ethiopic', assets),
-        fontWeight: block.ethiopic.weight,
-        lineHeight: 1.8,
-    };
+    const style = (face: TypePairingBlock['faces'][number]) => ({
+        fontFamily: fontStack(face, assets),
+        fontWeight: face.weight,
+        lineHeight: face.script === 'latin' ? undefined : 1.8,
+    });
+    const langFor = (script: string) =>
+        ({ ethiopic: 'am', latin: 'en', arabic: 'ar' })[script] ?? 'en';
 
     return (
         <div className="flex flex-col gap-4">
-            <div className="grid gap-4 md:grid-cols-2">
-                {(
-                    [
-                        ['ethiopic', t('Ethiopic'), block.ethiopic, ethiopic],
-                        ['latin', t('Latin'), block.latin, latin],
-                    ] as const
-                ).map(([script, label, font, style]) => (
+            <div
+                className={cn(
+                    'grid gap-4',
+                    block.faces.length > 1 && 'md:grid-cols-2',
+                    block.faces.length > 2 && 'xl:grid-cols-3',
+                )}
+            >
+                {block.faces.map((face, index) => (
                     <div
-                        key={script}
+                        key={index}
                         className="flex flex-col gap-3 rounded-xl border p-4"
                     >
                         <div className="flex flex-wrap items-baseline justify-between gap-2 text-sm">
                             <span className="text-muted-foreground">
-                                {label}
+                                {scriptLabel(t, face.script)}
                             </span>
                             <span className="font-medium">
-                                {font.family ||
-                                    (font.assetId
-                                        ? assets[font.assetId]?.name
+                                {face.family ||
+                                    (face.assetId
+                                        ? assets[face.assetId]?.name
                                         : '')}{' '}
-                                · {font.weight}
+                                · {face.weight}
                             </span>
                         </div>
                         <p
                             className="text-5xl"
-                            style={style}
-                            lang={script === 'ethiopic' ? 'am' : 'en'}
+                            style={style(face)}
+                            lang={langFor(face.script)}
+                            dir={face.script === 'arabic' ? 'rtl' : 'ltr'}
                         >
-                            {script === 'ethiopic' ? 'ሀለሐ' : 'Aa'}
+                            {scriptSpecimen[face.script]}
                         </p>
-                        {font.sample !== '' && (
+                        {face.sample !== '' && (
                             <p
                                 className="text-lg break-words"
-                                style={style}
-                                lang={script === 'ethiopic' ? 'am' : 'en'}
+                                style={style(face)}
+                                lang={langFor(face.script)}
+                                dir={face.script === 'arabic' ? 'rtl' : 'ltr'}
                             >
-                                {font.sample}
+                                {face.sample}
                             </p>
                         )}
                     </div>
@@ -380,39 +396,53 @@ function TypePairingView({
                     {block.scale.map((row, index) => (
                         <div
                             key={index}
-                            className="grid gap-2 p-4 md:grid-cols-[10rem_1fr_1fr] md:items-baseline"
+                            className="grid gap-2 p-4 md:grid-cols-[10rem_1fr] md:items-baseline"
                         >
                             <div className="flex flex-col text-sm text-muted-foreground">
-                                <Bi
-                                    text={row.label}
-                                    language={language}
-                                    as="span"
-                                />
+                                <Local text={row.label} as="span" />
                                 <span className="text-xs">
-                                    {row.ethiopic}px / {row.latin}px
+                                    {block.faces
+                                        .map((face) =>
+                                            row.sizes[face.script]
+                                                ? `${row.sizes[face.script]}px`
+                                                : null,
+                                        )
+                                        .filter(Boolean)
+                                        .join(' / ')}
                                 </span>
                             </div>
-                            <p
-                                lang="am"
-                                className="min-w-0 truncate"
-                                style={{ ...ethiopic, fontSize: row.ethiopic }}
-                            >
-                                {firstWords(block.ethiopic.sample) || 'ሀለሐመ'}
-                            </p>
-                            <p
-                                lang="en"
-                                className="min-w-0 truncate"
-                                style={{ ...latin, fontSize: row.latin }}
-                            >
-                                {firstWords(block.latin.sample) || 'Aa Bb Cc'}
-                            </p>
+                            <div className="flex min-w-0 flex-col gap-2">
+                                {block.faces.map(
+                                    (face, faceIndex) =>
+                                        row.sizes[face.script] && (
+                                            <p
+                                                key={faceIndex}
+                                                lang={langFor(face.script)}
+                                                dir={
+                                                    face.script === 'arabic'
+                                                        ? 'rtl'
+                                                        : 'ltr'
+                                                }
+                                                className="min-w-0 truncate"
+                                                style={{
+                                                    ...style(face),
+                                                    fontSize:
+                                                        row.sizes[face.script],
+                                                }}
+                                            >
+                                                {firstWords(face.sample) ||
+                                                    scriptSpecimen[face.script]}
+                                            </p>
+                                        ),
+                                )}
+                            </div>
                         </div>
                     ))}
                 </div>
             )}
 
             <div className="flex max-w-prose flex-col gap-2 text-sm text-muted-foreground">
-                <Bi text={block.note} language={language} />
+                <Local text={block.note} />
             </div>
         </div>
     );
@@ -424,11 +454,9 @@ function firstWords(sample: string): string {
 
 function DosDontsView({
     block,
-    language,
     assets,
 }: {
     block: DosDontsBlock;
-    language: ReadingLanguage;
     assets: Assets;
 }) {
     const { t } = useTranslation();
@@ -452,7 +480,7 @@ function DosDontsView({
                             <div className="flex aspect-[3/2] items-center justify-center bg-white p-4">
                                 <AssetImage
                                     asset={assets[item.assetId]}
-                                    alt={pick(item.caption, 'en')}
+                                    alt={written(item.caption, 'en')}
                                     className="h-full w-full text-neutral-500"
                                 />
                             </div>
@@ -473,7 +501,7 @@ function DosDontsView({
                                 )}
                                 {isDo ? t('Do') : t("Don't")}
                             </span>
-                            <Bi text={item.caption} language={language} />
+                            <Local text={item.caption} />
                         </figcaption>
                     </figure>
                 );

@@ -8,13 +8,15 @@ use Illuminate\Validation\Rule;
 
 /**
  * The building blocks of a guideline page, and the only shapes the database
- * ever stores. Every piece of text has an English and an Amharic version.
+ * ever stores. Every piece of text is a map from language code to text, e.g.
+ * {"am": "አርማ", "en": "Logo", "om": "Mallattoo"}, in any of the languages in
+ * config/languages.php. Languages not written yet are left out.
  *
  * - heading:      a section title
  * - text:         paragraphs
  * - colours:      swatches with a name, hex value and note
- * - type_pairing: a Latin and an Ethiopic typeface side by side, with a size scale
- * - logos:        logo files from the library, e.g. bilingual lockups
+ * - type_pairing: typefaces for each script (Ethiopic, Latin, Arabic) side by side, with a size scale
+ * - logos:        logo files from the library, e.g. lockups in several languages
  * - dos_donts:    "do" and "don't" examples, with or without a picture
  *
  * Keep resources/js/types/guideline.ts in step with this file.
@@ -22,6 +24,8 @@ use Illuminate\Validation\Rule;
 class GuidelineBlocks
 {
     public const TYPES = ['heading', 'text', 'colours', 'type_pairing', 'logos', 'dos_donts'];
+
+    public const SCRIPTS = ['ethiopic', 'latin', 'arabic'];
 
     public const MAX_BLOCKS = 60;
 
@@ -42,7 +46,7 @@ class GuidelineBlocks
     {
         $rules = [
             'blocks' => ['present', 'array', 'max:'.self::MAX_BLOCKS],
-            'blocks.*' => ['array:id,type,text,swatches,latin,ethiopic,scale,note,items'],
+            'blocks.*' => ['array:id,type,text,swatches,faces,scale,note,items'],
             'blocks.*.id' => ['nullable', 'string', 'regex:/^[A-Za-z0-9_-]{1,40}$/'],
             'blocks.*.type' => ['required', Rule::in(self::TYPES)],
         ];
@@ -54,34 +58,43 @@ class GuidelineBlocks
             $prefix = "blocks.{$index}";
 
             $rules += match ($type) {
-                'heading' => self::bilingual("{$prefix}.text", self::SHORT),
-                'text' => self::bilingual("{$prefix}.text", self::LONG),
+                'heading' => self::text("{$prefix}.text", self::SHORT),
+                'text' => self::text("{$prefix}.text", self::LONG),
                 'colours' => [
                     "{$prefix}.swatches" => ['present', 'array', 'max:24'],
-                    ...self::bilingual("{$prefix}.swatches.*.name", 80),
+                    "{$prefix}.swatches.*" => ['array:name,hex,note'],
+                    ...self::text("{$prefix}.swatches.*.name", 80),
                     "{$prefix}.swatches.*.hex" => ['required', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-                    ...self::bilingual("{$prefix}.swatches.*.note", self::SHORT),
+                    ...self::text("{$prefix}.swatches.*.note", self::SHORT),
                 ],
                 'type_pairing' => [
-                    ...self::font("{$prefix}.latin"),
-                    ...self::font("{$prefix}.ethiopic"),
+                    "{$prefix}.faces" => ['required', 'array', 'min:1', 'max:4'],
+                    "{$prefix}.faces.*" => ['array:script,family,assetId,weight,sample'],
+                    "{$prefix}.faces.*.script" => ['required', Rule::in(self::SCRIPTS)],
+                    "{$prefix}.faces.*.family" => ['present', 'nullable', 'string', 'max:80'],
+                    "{$prefix}.faces.*.assetId" => ['nullable', 'uuid'],
+                    "{$prefix}.faces.*.weight" => ['required', 'integer', Rule::in([300, 400, 500, 600, 700, 800])],
+                    "{$prefix}.faces.*.sample" => ['present', 'nullable', 'string', 'max:'.self::SHORT],
                     "{$prefix}.scale" => ['present', 'array', 'max:8'],
-                    ...self::bilingual("{$prefix}.scale.*.label", 80),
-                    "{$prefix}.scale.*.latin" => ['required', 'integer', 'between:8,160'],
-                    "{$prefix}.scale.*.ethiopic" => ['required', 'integer', 'between:8,160'],
-                    ...self::bilingual("{$prefix}.note", self::LONG),
+                    "{$prefix}.scale.*" => ['array:label,sizes'],
+                    ...self::text("{$prefix}.scale.*.label", 80),
+                    "{$prefix}.scale.*.sizes" => ['present', 'array:'.implode(',', self::SCRIPTS)],
+                    "{$prefix}.scale.*.sizes.*" => ['integer', 'between:8,160'],
+                    ...self::text("{$prefix}.note", self::LONG),
                 ],
                 'logos' => [
                     "{$prefix}.items" => ['present', 'array', 'max:12'],
+                    "{$prefix}.items.*" => ['array:assetId,caption,background'],
                     "{$prefix}.items.*.assetId" => ['nullable', 'uuid'],
-                    ...self::bilingual("{$prefix}.items.*.caption", self::SHORT),
+                    ...self::text("{$prefix}.items.*.caption", self::SHORT),
                     "{$prefix}.items.*.background" => ['required', Rule::in(['light', 'dark'])],
                 ],
                 'dos_donts' => [
                     "{$prefix}.items" => ['present', 'array', 'max:16'],
+                    "{$prefix}.items.*" => ['array:kind,assetId,caption'],
                     "{$prefix}.items.*.kind" => ['required', Rule::in(['do', 'dont'])],
                     "{$prefix}.items.*.assetId" => ['nullable', 'uuid'],
-                    ...self::bilingual("{$prefix}.items.*.caption", self::SHORT),
+                    ...self::text("{$prefix}.items.*.caption", self::SHORT),
                 ],
                 default => [],
             };
@@ -95,6 +108,41 @@ class GuidelineBlocks
     }
 
     /**
+     * Rules for a page title, in each language.
+     *
+     * @return array<string, list<mixed>>
+     */
+    public static function titleRules(): array
+    {
+        return self::text('title', 120);
+    }
+
+    /**
+     * Text in each language, trimmed, with languages left blank dropped.
+     *
+     * @param  mixed  $text
+     * @return array<string, string>
+     */
+    public static function cleanText(mixed $text): array
+    {
+        $clean = [];
+
+        if (! is_array($text)) {
+            return $clean;
+        }
+
+        foreach (Languages::codes() as $code) {
+            $value = $text[$code] ?? null;
+
+            if (is_string($value) && trim($value) !== '') {
+                $clean[$code] = trim($value);
+            }
+        }
+
+        return $clean;
+    }
+
+    /**
      * Every library file a set of blocks points at.
      *
      * @param  list<array<string, mixed>>  $blocks
@@ -105,7 +153,7 @@ class GuidelineBlocks
         $ids = [];
 
         foreach ($blocks as $block) {
-            foreach (self::assetSlots($block) as [$id, $purpose]) {
+            foreach (self::assetSlots($block) as [$id]) {
                 $ids[] = $id;
             }
         }
@@ -135,39 +183,37 @@ class GuidelineBlocks
     }
 
     /**
-     * A page's first blocks, so nobody starts from nothing. Amharic is left
-     * for the brand to write in its own words.
+     * A page's first blocks, so nobody starts from nothing. Only the English
+     * prompts are filled in; the brand writes its other languages in its
+     * own words.
      *
-     * @return array{title_en: string, title_am: string, blocks: list<array<string, mixed>>}
+     * @return array{title: array<string, string>, blocks: list<array<string, mixed>>}
      */
     public static function template(string $name): array
     {
-        $blank = ['en' => '', 'am' => ''];
-        $text = fn (string $en) => ['en' => $en, 'am' => ''];
+        $text = fn (string $en) => ['en' => $en];
         $block = fn (string $type, array $fields) => ['id' => self::newId(), 'type' => $type, ...$fields];
 
         return match ($name) {
             'logo' => [
-                'title_en' => 'Logo',
-                'title_am' => '',
+                'title' => $text('Logo'),
                 'blocks' => [
                     $block('heading', ['text' => $text('Our logo')]),
                     $block('text', ['text' => $text('Explain what the logo stands for and when to use each version.')]),
                     $block('logos', ['items' => [
-                        ['assetId' => null, 'caption' => $text('Primary lockup: Amharic and English'), 'background' => 'light'],
+                        ['assetId' => null, 'caption' => $text('Primary lockup with the name in Ge’ez and Latin script'), 'background' => 'light'],
                         ['assetId' => null, 'caption' => $text('On dark backgrounds'), 'background' => 'dark'],
                     ]]),
                     $block('heading', ['text' => $text('Using the logo')]),
                     $block('dos_donts', ['items' => [
                         ['kind' => 'do', 'assetId' => null, 'caption' => $text('Leave clear space around the logo.')],
                         ['kind' => 'dont', 'assetId' => null, 'caption' => $text("Don't stretch, recolour or rotate the logo.")],
-                        ['kind' => 'dont', 'assetId' => null, 'caption' => $text("Don't separate the Amharic and English names.")],
+                        ['kind' => 'dont', 'assetId' => null, 'caption' => $text("Don't separate the names in different scripts.")],
                     ]]),
                 ],
             ],
             'colour' => [
-                'title_en' => 'Colour',
-                'title_am' => '',
+                'title' => $text('Colour'),
                 'blocks' => [
                     $block('heading', ['text' => $text('Our colours')]),
                     $block('colours', ['swatches' => [
@@ -178,35 +224,35 @@ class GuidelineBlocks
                 ],
             ],
             'type' => [
-                'title_en' => 'Typography',
-                'title_am' => '',
+                'title' => $text('Typography'),
                 'blocks' => [
                     $block('heading', ['text' => $text('Our typefaces')]),
                     $block('type_pairing', [
-                        'latin' => ['family' => 'Instrument Sans', 'assetId' => null, 'weight' => 600, 'sample' => 'The quick brown fox jumps over the lazy dog'],
-                        'ethiopic' => ['family' => 'Noto Sans Ethiopic', 'assetId' => null, 'weight' => 500, 'sample' => 'ሀ ለ ሐ መ ሠ ረ ሰ ሸ ቀ በ ተ ቸ ነ ኘ አ ከ ወ ዘ የ ደ ጀ ገ ጠ ጨ ፈ ፐ'],
+                        'faces' => [
+                            ['script' => 'ethiopic', 'family' => 'Noto Sans Ethiopic', 'assetId' => null, 'weight' => 500, 'sample' => 'ሀ ለ ሐ መ ሠ ረ ሰ ሸ ቀ በ ተ ቸ ነ ኘ አ ከ ወ ዘ የ ደ ጀ ገ ጠ ጨ ፈ ፐ'],
+                            ['script' => 'latin', 'family' => 'Instrument Sans', 'assetId' => null, 'weight' => 600, 'sample' => 'The quick brown fox jumps over the lazy dog'],
+                        ],
                         'scale' => [
-                            ['label' => $text('Headline'), 'latin' => 40, 'ethiopic' => 36],
-                            ['label' => $text('Subheading'), 'latin' => 24, 'ethiopic' => 22],
-                            ['label' => $text('Body'), 'latin' => 16, 'ethiopic' => 16],
+                            ['label' => $text('Headline'), 'sizes' => ['ethiopic' => 36, 'latin' => 40]],
+                            ['label' => $text('Subheading'), 'sizes' => ['ethiopic' => 22, 'latin' => 24]],
+                            ['label' => $text('Body'), 'sizes' => ['ethiopic' => 16, 'latin' => 16]],
                         ],
                         'note' => $text('Ethiopic runs taller than Latin. Set it slightly smaller in headlines and give it more line height.'),
                     ]),
                 ],
             ],
             'voice' => [
-                'title_en' => 'Voice',
-                'title_am' => '',
+                'title' => $text('Voice'),
                 'blocks' => [
                     $block('heading', ['text' => $text('How we sound')]),
-                    $block('text', ['text' => $text('Describe the brand in three words, and how it speaks to customers in Amharic and in English.')]),
+                    $block('text', ['text' => $text('Describe the brand in three words, and how it speaks to customers in each of its languages.')]),
                     $block('dos_donts', ['items' => [
-                        ['kind' => 'do', 'assetId' => null, 'caption' => $blank],
-                        ['kind' => 'dont', 'assetId' => null, 'caption' => $blank],
+                        ['kind' => 'do', 'assetId' => null, 'caption' => []],
+                        ['kind' => 'dont', 'assetId' => null, 'caption' => []],
                     ]]),
                 ],
             ],
-            default => ['title_en' => '', 'title_am' => '', 'blocks' => []],
+            default => ['title' => [], 'blocks' => []],
         };
     }
 
@@ -218,26 +264,11 @@ class GuidelineBlocks
     /**
      * @return array<string, list<mixed>>
      */
-    private static function bilingual(string $key, int $max): array
+    private static function text(string $key, int $max): array
     {
         return [
-            $key => ['required', 'array:en,am'],
-            "{$key}.en" => ['present', 'nullable', 'string', "max:{$max}"],
-            "{$key}.am" => ['present', 'nullable', 'string', "max:{$max}"],
-        ];
-    }
-
-    /**
-     * @return array<string, list<mixed>>
-     */
-    private static function font(string $key): array
-    {
-        return [
-            $key => ['required', 'array:family,assetId,weight,sample'],
-            "{$key}.family" => ['present', 'nullable', 'string', 'max:80'],
-            "{$key}.assetId" => ['nullable', 'uuid'],
-            "{$key}.weight" => ['required', 'integer', Rule::in([300, 400, 500, 600, 700, 800])],
-            "{$key}.sample" => ['present', 'nullable', 'string', 'max:'.self::SHORT],
+            $key => ['present', 'array:'.implode(',', Languages::codes())],
+            "{$key}.*" => ['nullable', 'string', "max:{$max}"],
         ];
     }
 
@@ -254,16 +285,23 @@ class GuidelineBlocks
             'heading', 'text' => ['text' => self::cleanText($block['text'])],
             'colours' => ['swatches' => self::each($block['swatches'], fn (array $swatch) => [
                 'name' => self::cleanText($swatch['name']),
-                'hex' => strtoupper($swatch['hex']),
+                'hex' => strtoupper((string) $swatch['hex']),
                 'note' => self::cleanText($swatch['note']),
             ])],
             'type_pairing' => [
-                'latin' => self::cleanFont($block['latin']),
-                'ethiopic' => self::cleanFont($block['ethiopic']),
+                'faces' => self::each($block['faces'], fn (array $face) => [
+                    'script' => $face['script'],
+                    'family' => trim(is_string($face['family'] ?? null) ? $face['family'] : ''),
+                    'assetId' => self::cleanId($face['assetId'] ?? null),
+                    'weight' => is_numeric($face['weight'] ?? null) ? (int) $face['weight'] : 400,
+                    'sample' => trim(is_string($face['sample'] ?? null) ? $face['sample'] : ''),
+                ]),
                 'scale' => self::each($block['scale'], fn (array $row) => [
                     'label' => self::cleanText($row['label']),
-                    'latin' => (int) $row['latin'],
-                    'ethiopic' => (int) $row['ethiopic'],
+                    'sizes' => array_map(
+                        fn (mixed $size) => is_numeric($size) ? (int) $size : 16,
+                        array_intersect_key(is_array($row['sizes'] ?? null) ? $row['sizes'] : [], array_flip(self::SCRIPTS)),
+                    ),
                 ]),
                 'note' => self::cleanText($block['note']),
             ],
@@ -291,32 +329,6 @@ class GuidelineBlocks
         return array_values(array_map(fn (mixed $item) => $clean(is_array($item) ? $item : []), $items));
     }
 
-    /**
-     * @param  array<mixed>  $text
-     * @return array{en: string, am: string}
-     */
-    private static function cleanText(array $text): array
-    {
-        return [
-            'en' => trim(is_string($text['en'] ?? null) ? $text['en'] : ''),
-            'am' => trim(is_string($text['am'] ?? null) ? $text['am'] : ''),
-        ];
-    }
-
-    /**
-     * @param  array<mixed>  $font
-     * @return array{family: string, assetId: string|null, weight: int, sample: string}
-     */
-    private static function cleanFont(array $font): array
-    {
-        return [
-            'family' => trim(is_string($font['family'] ?? null) ? $font['family'] : ''),
-            'assetId' => self::cleanId($font['assetId'] ?? null),
-            'weight' => is_numeric($font['weight'] ?? null) ? (int) $font['weight'] : 400,
-            'sample' => trim(is_string($font['sample'] ?? null) ? $font['sample'] : ''),
-        ];
-    }
-
     private static function cleanId(mixed $id): ?string
     {
         return is_string($id) && $id !== '' ? Str::lower($id) : null;
@@ -329,8 +341,9 @@ class GuidelineBlocks
     private static function assetSlots(array $block): array
     {
         $slots = [];
+        $type = $block['type'] ?? null;
 
-        $items = match ($block['type'] ?? null) {
+        $items = match ($type) {
             'logos', 'dos_donts' => is_array($block['items'] ?? null) ? $block['items'] : [],
             default => [],
         };
@@ -341,12 +354,10 @@ class GuidelineBlocks
             }
         }
 
-        if (($block['type'] ?? null) === 'type_pairing') {
-            foreach (['latin', 'ethiopic'] as $script) {
-                $font = $block[$script] ?? null;
-
-                if (is_array($font) && is_string($font['assetId'] ?? null)) {
-                    $slots[] = [$font['assetId'], 'font'];
+        if ($type === 'type_pairing' && is_array($block['faces'] ?? null)) {
+            foreach ($block['faces'] as $face) {
+                if (is_array($face) && is_string($face['assetId'] ?? null)) {
+                    $slots[] = [$face['assetId'], 'font'];
                 }
             }
         }

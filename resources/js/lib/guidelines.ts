@@ -1,13 +1,14 @@
 import { useEffect } from 'react';
 import type { Translate } from '@/lib/i18n';
 import type {
-    Bilingual,
-    FontSpec,
+    ContentLanguage,
+    FontFaceSpec,
     GuidelineAsset,
     GuidelineBlock,
     GuidelineBlockType,
     GuidelineTemplate,
-    ReadingLanguage,
+    LocalText,
+    Script,
 } from '@/types';
 
 export const blockTypes: GuidelineBlockType[] = [
@@ -42,7 +43,7 @@ export function templateLabel(t: Translate, template: GuidelineTemplate) {
     return {
         logo: {
             title: t('Logo'),
-            description: t('Logo versions, bilingual lockups and misuse'),
+            description: t('Logo versions, lockups and misuse'),
         },
         colour: {
             title: t('Colour'),
@@ -50,7 +51,7 @@ export function templateLabel(t: Translate, template: GuidelineTemplate) {
         },
         type: {
             title: t('Typography'),
-            description: t('Ethiopic and Latin typefaces and sizes'),
+            description: t('Typefaces for each script, with sizes'),
         },
         voice: {
             title: t('Voice'),
@@ -63,13 +64,68 @@ export function templateLabel(t: Translate, template: GuidelineTemplate) {
     }[template];
 }
 
-export const emptyText = (): Bilingual => ({ en: '', am: '' });
+export const emptyText = (): LocalText => ({});
 
 function newId(): string {
     return Math.random().toString(36).slice(2, 14);
 }
 
-export function newBlock(type: GuidelineBlockType): GuidelineBlock {
+export const scripts: Script[] = ['ethiopic', 'latin', 'arabic'];
+
+export function scriptLabel(t: Translate, script: Script): string {
+    return {
+        ethiopic: t('Ethiopic (Ge’ez)'),
+        latin: t('Latin'),
+        arabic: t('Arabic'),
+    }[script];
+}
+
+/** The specimen letters shown large for each script. */
+export const scriptSpecimen: Record<Script, string> = {
+    ethiopic: 'ሀለሐ',
+    latin: 'Aa',
+    arabic: 'أبج',
+};
+
+const defaultFaces: Record<Script, FontFaceSpec> = {
+    ethiopic: {
+        script: 'ethiopic',
+        family: 'Noto Sans Ethiopic',
+        assetId: null,
+        weight: 500,
+        sample: 'ሀ ለ ሐ መ ሠ ረ ሰ ሸ ቀ በ ተ ቸ ነ ኘ አ ከ ወ ዘ የ ደ ጀ ገ ጠ ጨ ፈ ፐ',
+    },
+    latin: {
+        script: 'latin',
+        family: 'Instrument Sans',
+        assetId: null,
+        weight: 600,
+        sample: 'The quick brown fox jumps over the lazy dog',
+    },
+    arabic: {
+        script: 'arabic',
+        family: '',
+        assetId: null,
+        weight: 500,
+        sample: 'ا ب ت ث ج ح خ د ذ ر ز س ش ص ض ط ظ ع غ ف ق ك ل م ن ه و ي',
+    },
+};
+
+export function defaultFace(script: Script): FontFaceSpec {
+    return { ...defaultFaces[script] };
+}
+
+/**
+ * The scripts a brand's languages are written in, in the brand's order.
+ */
+export function scriptsOf(languages: ContentLanguage[]): Script[] {
+    return [...new Set(languages.map((language) => language.script))];
+}
+
+export function newBlock(
+    type: GuidelineBlockType,
+    languages: ContentLanguage[],
+): GuidelineBlock {
     const id = newId();
 
     switch (type) {
@@ -84,32 +140,26 @@ export function newBlock(type: GuidelineBlockType): GuidelineBlock {
                     { name: emptyText(), hex: '#01803B', note: emptyText() },
                 ],
             };
-        case 'type_pairing':
+        case 'type_pairing': {
+            const used = scriptsOf(languages);
+
             return {
                 id,
                 type,
-                latin: {
-                    family: 'Instrument Sans',
-                    assetId: null,
-                    weight: 600,
-                    sample: 'The quick brown fox jumps over the lazy dog',
-                },
-                ethiopic: {
-                    family: 'Noto Sans Ethiopic',
-                    assetId: null,
-                    weight: 500,
-                    sample: 'ሀ ለ ሐ መ ሠ ረ ሰ ሸ ቀ በ ተ ቸ ነ ኘ አ ከ ወ ዘ የ ደ ጀ ገ ጠ ጨ ፈ ፐ',
-                },
+                faces: used.map(defaultFace),
                 scale: [
                     {
-                        label: { en: 'Headline', am: '' },
-                        latin: 40,
-                        ethiopic: 36,
+                        label: { en: 'Headline' },
+                        sizes: Object.fromEntries(used.map((s) => [s, 36])),
                     },
-                    { label: { en: 'Body', am: '' }, latin: 16, ethiopic: 16 },
+                    {
+                        label: { en: 'Body' },
+                        sizes: Object.fromEntries(used.map((s) => [s, 16])),
+                    },
                 ],
                 note: emptyText(),
             };
+        }
         case 'logos':
             return {
                 id,
@@ -134,25 +184,56 @@ export function newBlock(type: GuidelineBlockType): GuidelineBlock {
     }
 }
 
-export function isBlank(text: Bilingual): boolean {
-    return text.en.trim() === '' && text.am.trim() === '';
+export function written(text: LocalText, code: string): string {
+    return (text[code] ?? '').trim();
+}
+
+export function isBlank(text: LocalText): boolean {
+    return Object.values(text).every((value) => (value ?? '').trim() === '');
 }
 
 /**
- * The text to show for one language, falling back to the other language
- * when it has not been written yet.
+ * The language to show a text in: the one asked for if it has been
+ * written, otherwise the brand's first language that has, otherwise any.
  */
 export function pick(
-    text: Bilingual,
-    language: Exclude<ReadingLanguage, 'both'>,
-): string {
-    const other = language === 'en' ? 'am' : 'en';
+    text: LocalText,
+    code: string,
+    languages: ContentLanguage[],
+): { code: string; value: string } | null {
+    const order = [
+        code,
+        ...languages.map((language) => language.code),
+        ...Object.keys(text),
+    ];
 
-    return text[language].trim() !== '' ? text[language] : text[other];
+    for (const candidate of order) {
+        const value = written(text, candidate);
+
+        if (value !== '') {
+            return { code: candidate, value };
+        }
+    }
+
+    return null;
 }
 
-export function pageTitle(title: Bilingual, t: Translate): string {
-    return title.en || title.am || t('Untitled page');
+export function pageTitle(
+    title: LocalText,
+    t: Translate,
+    languages: ContentLanguage[] = [],
+): string {
+    return pick(title, 'en', languages)?.value ?? t('Untitled page');
+}
+
+/**
+ * Right-to-left languages, for the dir attribute.
+ */
+export function directionOf(code: string, languages: ContentLanguage[]) {
+    return (
+        languages.find((language) => language.code === code)?.dir ??
+        (code === 'ar' ? 'rtl' : 'ltr')
+    );
 }
 
 /* Colour codes ---------------------------------------------------------- */
@@ -225,6 +306,13 @@ const BUNDLED: Record<string, string> = {
     'noto sans ethiopic': 'var(--font-ethiopic)',
 };
 
+const FALLBACK: Record<Script, string> = {
+    ethiopic: 'var(--font-ethiopic)',
+    latin: 'var(--font-sans)',
+    // No Arabic font is bundled; every phone and computer has one.
+    arabic: 'system-ui, sans-serif',
+};
+
 function fontFaceName(assetId: string): string {
     return `guideline-font-${assetId}`;
 }
@@ -232,28 +320,25 @@ function fontFaceName(assetId: string): string {
 /**
  * The CSS font stack for a typeface on a page: the brand's own font file
  * when one is chosen from the library, then the named family if this device
- * has it, then the app's own font for the script.
+ * has it, then a font for the script.
  */
 export function fontStack(
-    font: FontSpec,
-    script: 'latin' | 'ethiopic',
+    face: FontFaceSpec,
     assets: Record<string, GuidelineAsset>,
 ): string {
-    const fallback =
-        script === 'ethiopic' ? 'var(--font-ethiopic)' : 'var(--font-sans)';
     const stack: string[] = [];
 
-    if (font.assetId && assets[font.assetId]?.fontUrl) {
-        stack.push(`"${fontFaceName(font.assetId)}"`);
+    if (face.assetId && assets[face.assetId]?.fontUrl) {
+        stack.push(`"${fontFaceName(face.assetId)}"`);
     }
 
-    const family = font.family.replace(/["'\\;{}<>]/g, '').trim();
+    const family = face.family.replace(/["'\\;{}<>]/g, '').trim();
 
     if (family !== '') {
         stack.push(BUNDLED[family.toLowerCase()] ?? `"${family}"`);
     }
 
-    stack.push(fallback);
+    stack.push(FALLBACK[face.script]);
 
     return stack.join(', ');
 }
@@ -268,7 +353,7 @@ export function useGuidelineFonts(
     const urls = blocks
         .flatMap((block) =>
             block.type === 'type_pairing'
-                ? [block.latin.assetId, block.ethiopic.assetId]
+                ? block.faces.map((face) => face.assetId)
                 : [],
         )
         .filter((id): id is string => id !== null && !!assets[id]?.fontUrl)

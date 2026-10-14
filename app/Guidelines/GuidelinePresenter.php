@@ -22,7 +22,7 @@ class GuidelinePresenter
     /**
      * The brand's pages the person can open, in order, for the page list.
      *
-     * @return list<array{id: string, title: array{en: string, am: string}, published: bool, hasChanges: bool}>
+     * @return list<array{id: string, title: array<string, string>, published: bool, hasChanges: bool}>
      */
     public function pageList(Brand $brand): array
     {
@@ -46,13 +46,11 @@ class GuidelinePresenter
     }
 
     /**
-     * @return array{en: string, am: string}
+     * @return array<string, string>
      */
     public function title(GuidelinePage $page, bool $working): array
     {
-        return $working
-            ? ['en' => $page->title_en, 'am' => $page->title_am]
-            : ['en' => (string) $page->published_title_en, 'am' => (string) $page->published_title_am];
+        return $working ? $page->title : ($page->published_title ?? []);
     }
 
     /**

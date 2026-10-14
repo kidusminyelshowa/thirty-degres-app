@@ -7,6 +7,7 @@ use App\Assets\VisibleAssets;
 use App\Enums\AssetStatus;
 use App\Guidelines\GuidelineBlocks;
 use App\Guidelines\GuidelinePresenter;
+use App\Guidelines\Languages;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
 use App\Models\Asset;
@@ -49,10 +50,12 @@ class GuidelinePageController extends Controller
                 'id' => $brand->id,
                 'name' => $brand->name,
                 'parentId' => $brand->parent_id,
+                'languages' => Languages::forBrand($brand),
                 'pages' => $this->presenter->pageList($brand),
                 'canCreate' => Gate::allows('create', [GuidelinePage::class, $brand]),
+                'canSetLanguages' => Gate::allows('setGuidelineLanguages', $brand),
             ])->values(),
-            'templates' => GuidelineBlocks::TEMPLATES,
+            'allLanguages' => Languages::all(),
         ]);
     }
 
@@ -95,15 +98,14 @@ class GuidelinePageController extends Controller
             $page = GuidelinePage::create([
                 'brand_id' => $brand->id,
                 'position' => is_numeric($position) ? (int) $position + 1 : 0,
-                'title_en' => $template['title_en'],
-                'title_am' => $template['title_am'],
+                'title' => $template['title'],
                 'blocks' => $template['blocks'],
                 'created_by' => $user->id,
                 'edited_by' => $user->id,
                 'edited_at' => now(),
             ]);
 
-            ActivityLog::record('guideline.created', $page, ['title' => $page->title_en, 'brand_id' => $brand->id]);
+            ActivityLog::record('guideline.created', $page, ['title' => $page->title, 'brand_id' => $brand->id]);
 
             return $page;
         });
@@ -162,16 +164,11 @@ class GuidelinePageController extends Controller
         abort_unless(Gate::allows('view', $page), 404);
         Gate::authorize('update', $page);
 
-        $validated = $request->validate([
-            'title_en' => ['present', 'nullable', 'string', 'max:120'],
-            'title_am' => ['present', 'nullable', 'string', 'max:120'],
-        ]);
+        $request->validate(GuidelineBlocks::titleRules());
+        $title = GuidelineBlocks::cleanText($request->input('title'));
 
-        $titleEn = trim((string) ($validated['title_en'] ?? ''));
-        $titleAm = trim((string) ($validated['title_am'] ?? ''));
-
-        if ($titleEn === '' && $titleAm === '') {
-            throw ValidationException::withMessages(['title_en' => __('Give the page a title in English or Amharic.')]);
+        if ($title === []) {
+            throw ValidationException::withMessages(['title' => __('Give the page a title in at least one language.')]);
         }
 
         $blocks = GuidelineBlocks::validate($request->all());
@@ -182,8 +179,7 @@ class GuidelinePageController extends Controller
         $user = $request->user();
 
         $page->update([
-            'title_en' => $titleEn,
-            'title_am' => $titleAm,
+            'title' => $title,
             'blocks' => $blocks,
             'edited_by' => $user->id,
             'edited_at' => now(),
@@ -205,15 +201,14 @@ class GuidelinePageController extends Controller
         $user = $request->user();
 
         DB::transaction(function () use ($page, $user) {
-            $page->published_title_en = $page->title_en;
-            $page->published_title_am = $page->title_am;
+            $page->published_title = $page->title;
             $page->published_blocks = $page->blocks;
             $page->published_by = $user->id;
             $page->published_at = now();
             $page->save();
 
             ActivityLog::record('guideline.published', $page, [
-                'title' => $page->title_en,
+                'title' => $page->title,
                 'self_approved' => $page->edited_by === $user->id,
             ]);
         });
@@ -221,6 +216,39 @@ class GuidelinePageController extends Controller
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Published. Everyone on this brand now sees this version.')]);
 
         return to_route('workspaces.guidelines.show', [$workspace, $page]);
+    }
+
+    /**
+     * Choose which languages the brand's guidelines are written in, and in
+     * which order. Text already written in a language that is taken off
+     * stays saved, so adding it back brings it back.
+     */
+    public function languages(Request $request, Workspace $workspace, Brand $brand): RedirectResponse
+    {
+        abort_unless(Gate::allows('view', $brand), 404);
+        Gate::authorize('setGuidelineLanguages', $brand);
+
+        $validated = $request->validate([
+            'languages' => ['required', 'array', 'min:1', 'max:'.config('languages.max_per_brand')],
+            'languages.*' => ['required', 'string', 'distinct', Rule::in(Languages::codes())],
+        ], [
+            'languages.required' => __('Choose at least one language.'),
+        ]);
+
+        /** @var list<string> $languages */
+        $languages = array_values($validated['languages']);
+        $previous = $brand->guideline_languages;
+
+        DB::transaction(function () use ($brand, $languages, $previous) {
+            $brand->guideline_languages = $languages;
+            $brand->save();
+
+            ActivityLog::record('brand.guideline_languages', $brand, ['from' => $previous, 'to' => $languages]);
+        });
+
+        Inertia::flash('toast', ['type' => 'success', 'message' => __('Languages saved.')]);
+
+        return back();
     }
 
     /**
@@ -273,7 +301,7 @@ class GuidelinePageController extends Controller
 
         DB::transaction(function () use ($page) {
             $page->delete();
-            ActivityLog::record('guideline.deleted', $page, ['title' => $page->title_en, 'brand_id' => $page->brand_id]);
+            ActivityLog::record('guideline.deleted', $page, ['title' => $page->title, 'brand_id' => $page->brand_id]);
         });
 
         Inertia::flash('toast', ['type' => 'success', 'message' => __('Page deleted.')]);
@@ -298,6 +326,8 @@ class GuidelinePageController extends Controller
                 'hasChanges' => Gate::allows('update', $page) && $page->hasUnpublishedChanges(),
             ],
             'brand' => ['id' => $brand->id, 'name' => $brand->name],
+            'languages' => Languages::forBrand($brand),
+            'allLanguages' => Languages::all(),
             'pages' => $this->presenter->pageList($brand),
             'assets' => $this->presenter->assetsFor($workspace, $brand, $blocks),
         ];
@@ -317,6 +347,7 @@ class GuidelinePageController extends Controller
             'reorder' => Gate::allows('reorder', [GuidelinePage::class, $page->brand]),
             'delete' => Gate::allows('delete', $page),
             'create' => Gate::allows('create', [GuidelinePage::class, $page->brand]),
+            'setLanguages' => Gate::allows('setGuidelineLanguages', $page->brand),
         ];
     }
 

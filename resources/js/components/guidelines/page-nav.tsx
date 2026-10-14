@@ -3,7 +3,7 @@ import { pageTitle } from '@/lib/guidelines';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { show } from '@/routes/workspaces/guidelines';
-import type { GuidelinePageSummary } from '@/types';
+import type { ContentLanguage, GuidelinePageSummary } from '@/types';
 
 /**
  * The brand's guideline pages, in order, with the open one marked.
@@ -11,9 +11,11 @@ import type { GuidelinePageSummary } from '@/types';
 export function PageNav({
     pages,
     current,
+    languages,
 }: {
     pages: GuidelinePageSummary[];
     current: string;
+    languages: ContentLanguage[];
 }) {
     const { t } = useTranslation();
     const workspace = usePage().props.currentWorkspace!;
@@ -37,15 +39,9 @@ export function PageNav({
                                 {index + 1}
                             </span>
                             <span className="flex flex-col">
-                                <span>{pageTitle(page.title, t)}</span>
-                                {page.title.en && page.title.am && (
-                                    <span
-                                        lang="am"
-                                        className="text-xs text-muted-foreground"
-                                    >
-                                        {page.title.am}
-                                    </span>
-                                )}
+                                <span>
+                                    {pageTitle(page.title, t, languages)}
+                                </span>
                                 {(!page.published || page.hasChanges) && (
                                     <span className="text-xs text-muted-foreground">
                                         {page.published

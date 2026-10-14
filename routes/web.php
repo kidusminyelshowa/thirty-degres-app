@@ -54,6 +54,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::post('brands/{brand}/assets', [AssetController::class, 'store'])->middleware('throttle:120,1')->name('brands.assets.store');
                 Route::get('brands/{brand}/guidelines', [GuidelinePageController::class, 'brand'])->name('brands.guidelines.index');
                 Route::post('brands/{brand}/guidelines', [GuidelinePageController::class, 'store'])->name('brands.guidelines.store');
+                Route::put('brands/{brand}/guidelines/languages', [GuidelinePageController::class, 'languages'])->name('brands.guidelines.languages');
             });
 
             Route::whereUuid('asset')->prefix('assets/{asset}')->name('assets.')->group(function () {

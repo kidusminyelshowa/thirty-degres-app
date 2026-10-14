@@ -19,14 +19,22 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { statusLabel } from '@/lib/assets';
-import { emptyText, textOn } from '@/lib/guidelines';
+import { useBrandLanguages } from '@/components/guidelines/block-view';
+import {
+    defaultFace,
+    emptyText,
+    scriptLabel,
+    scripts,
+    textOn,
+} from '@/lib/guidelines';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type {
-    Bilingual,
-    FontSpec,
+    FontFaceSpec,
     GuidelineAsset,
     GuidelineBlock,
+    LocalText,
+    Script,
 } from '@/types';
 
 type Library = GuidelineAsset[];
@@ -48,7 +56,7 @@ export function BlockEditor({
     switch (block.type) {
         case 'heading':
             return (
-                <BilingualField
+                <LocalField
                     label={t('Heading')}
                     value={block.text}
                     onChange={(text) => onChange({ ...block, text })}
@@ -57,7 +65,7 @@ export function BlockEditor({
             );
         case 'text':
             return (
-                <BilingualField
+                <LocalField
                     label={t('Text')}
                     value={block.text}
                     onChange={(text) => onChange({ ...block, text })}
@@ -84,7 +92,7 @@ export function BlockEditor({
                                 onChange={(hex) => update({ ...swatch, hex })}
                             />
                             <div className="grid gap-3">
-                                <BilingualField
+                                <LocalField
                                     label={t('Colour name')}
                                     value={swatch.name}
                                     onChange={(name) =>
@@ -92,7 +100,7 @@ export function BlockEditor({
                                     }
                                     maxLength={80}
                                 />
-                                <BilingualField
+                                <LocalField
                                     label={t('When to use it')}
                                     value={swatch.note}
                                     onChange={(note) =>
@@ -108,24 +116,29 @@ export function BlockEditor({
         case 'type_pairing':
             return (
                 <div className="grid gap-4">
-                    <div className="grid gap-4 md:grid-cols-2">
-                        <FontEditor
-                            label={t('Ethiopic typeface')}
-                            script="ethiopic"
-                            value={block.ethiopic}
-                            onChange={(ethiopic) =>
-                                onChange({ ...block, ethiopic })
-                            }
-                            library={library}
-                        />
-                        <FontEditor
-                            label={t('Latin typeface')}
-                            script="latin"
-                            value={block.latin}
-                            onChange={(latin) => onChange({ ...block, latin })}
-                            library={library}
-                        />
-                    </div>
+                    <ListEditor
+                        items={block.faces}
+                        onChange={(faces) => onChange({ ...block, faces })}
+                        max={4}
+                        addLabel={t('Add typeface')}
+                        create={() =>
+                            defaultFace(
+                                scripts.find(
+                                    (script) =>
+                                        !block.faces.some(
+                                            (face) => face.script === script,
+                                        ),
+                                ) ?? 'latin',
+                            )
+                        }
+                        render={(face, update) => (
+                            <FontEditor
+                                value={face}
+                                onChange={update}
+                                library={library}
+                            />
+                        )}
+                    />
                     <div className="grid gap-2">
                         <span className="text-sm font-medium">
                             {t('Sizes')}
@@ -137,12 +150,16 @@ export function BlockEditor({
                             addLabel={t('Add size')}
                             create={() => ({
                                 label: emptyText(),
-                                latin: 16,
-                                ethiopic: 16,
+                                sizes: Object.fromEntries(
+                                    block.faces.map((face) => [
+                                        face.script,
+                                        16,
+                                    ]),
+                                ),
                             })}
                             render={(row, update) => (
-                                <div className="grid gap-3 md:grid-cols-[1fr_7rem_7rem]">
-                                    <BilingualField
+                                <div className="grid gap-3">
+                                    <LocalField
                                         label={t('Use')}
                                         value={row.label}
                                         onChange={(label) =>
@@ -150,25 +167,40 @@ export function BlockEditor({
                                         }
                                         maxLength={80}
                                     />
-                                    <NumberField
-                                        label={t('Ethiopic px')}
-                                        value={row.ethiopic}
-                                        onChange={(ethiopic) =>
-                                            update({ ...row, ethiopic })
-                                        }
-                                    />
-                                    <NumberField
-                                        label={t('Latin px')}
-                                        value={row.latin}
-                                        onChange={(latin) =>
-                                            update({ ...row, latin })
-                                        }
-                                    />
+                                    <div className="flex flex-wrap gap-3">
+                                        {[
+                                            ...new Set(
+                                                block.faces.map(
+                                                    (face) => face.script,
+                                                ),
+                                            ),
+                                        ].map((script) => (
+                                            <NumberField
+                                                key={script}
+                                                label={t(':script px', {
+                                                    script: scriptLabel(
+                                                        t,
+                                                        script,
+                                                    ),
+                                                })}
+                                                value={row.sizes[script] ?? 16}
+                                                onChange={(size) =>
+                                                    update({
+                                                        ...row,
+                                                        sizes: {
+                                                            ...row.sizes,
+                                                            [script]: size,
+                                                        },
+                                                    })
+                                                }
+                                            />
+                                        ))}
+                                    </div>
                                 </div>
                             )}
                         />
                     </div>
-                    <BilingualField
+                    <LocalField
                         label={t('Notes on using them together')}
                         value={block.note}
                         onChange={(note) => onChange({ ...block, note })}
@@ -200,7 +232,7 @@ export function BlockEditor({
                                 background={item.background}
                             />
                             <div className="grid gap-3">
-                                <BilingualField
+                                <LocalField
                                     label={t('Caption')}
                                     value={item.caption}
                                     onChange={(caption) =>
@@ -286,7 +318,7 @@ export function BlockEditor({
                                     optional
                                 />
                             </div>
-                            <BilingualField
+                            <LocalField
                                 label={t('Example')}
                                 value={item.caption}
                                 onChange={(caption) =>
@@ -315,9 +347,10 @@ function Textarea({ className, ...props }: ComponentProps<'textarea'>) {
 }
 
 /**
- * The same text in English and Amharic, side by side on wide screens.
+ * The same text in each of the brand's languages, two side by side on wide
+ * screens. Each box is marked with its language and direction.
  */
-export function BilingualField({
+export function LocalField({
     label,
     value,
     onChange,
@@ -325,53 +358,43 @@ export function BilingualField({
     maxLength,
 }: {
     label: string;
-    value: Bilingual;
-    onChange: (value: Bilingual) => void;
+    value: LocalText;
+    onChange: (value: LocalText) => void;
     multiline?: boolean;
     maxLength: number;
 }) {
     const id = useId();
+    const languages = useBrandLanguages();
     const Field = multiline ? Textarea : Input;
 
     return (
         <fieldset className="grid gap-2">
             <legend className="mb-2 text-sm font-medium">{label}</legend>
             <div className="grid gap-2 md:grid-cols-2">
-                <div className="grid gap-1">
-                    <Label
-                        htmlFor={`${id}-am`}
-                        className="text-xs text-muted-foreground"
-                        lang="am"
-                    >
-                        አማርኛ
-                    </Label>
-                    <Field
-                        id={`${id}-am`}
-                        lang="am"
-                        value={value.am}
-                        maxLength={maxLength}
-                        onChange={(event) =>
-                            onChange({ ...value, am: event.target.value })
-                        }
-                    />
-                </div>
-                <div className="grid gap-1">
-                    <Label
-                        htmlFor={`${id}-en`}
-                        className="text-xs text-muted-foreground"
-                    >
-                        English
-                    </Label>
-                    <Field
-                        id={`${id}-en`}
-                        lang="en"
-                        value={value.en}
-                        maxLength={maxLength}
-                        onChange={(event) =>
-                            onChange({ ...value, en: event.target.value })
-                        }
-                    />
-                </div>
+                {languages.map((language) => (
+                    <div key={language.code} className="grid gap-1">
+                        <Label
+                            htmlFor={`${id}-${language.code}`}
+                            className="text-xs text-muted-foreground"
+                            lang={language.code}
+                        >
+                            {language.native}
+                        </Label>
+                        <Field
+                            id={`${id}-${language.code}`}
+                            lang={language.code}
+                            dir={language.dir}
+                            value={value[language.code] ?? ''}
+                            maxLength={maxLength}
+                            onChange={(event) =>
+                                onChange({
+                                    ...value,
+                                    [language.code]: event.target.value,
+                                })
+                            }
+                        />
+                    </div>
+                ))}
             </div>
         </fieldset>
     );
@@ -480,26 +503,42 @@ function NumberField({
 }
 
 function FontEditor({
-    label,
-    script,
     value,
     onChange,
     library,
 }: {
-    label: string;
-    script: 'latin' | 'ethiopic';
-    value: FontSpec;
-    onChange: (value: FontSpec) => void;
+    value: FontFaceSpec;
+    onChange: (value: FontFaceSpec) => void;
     library: Library;
 }) {
     const { t } = useTranslation();
     const id = useId();
     const fonts = library.filter((asset) => asset.fontUrl !== null);
     const NONE = 'none';
+    const script = value.script;
 
     return (
-        <fieldset className="grid content-start gap-3 rounded-lg border p-3">
-            <legend className="px-1 text-sm font-medium">{label}</legend>
+        <div className="grid content-start gap-3 md:grid-cols-2">
+            <div className="grid gap-1">
+                <Label className="text-xs">{t('Script')}</Label>
+                <Select
+                    value={script}
+                    onValueChange={(next) =>
+                        onChange({ ...value, script: next as Script })
+                    }
+                >
+                    <SelectTrigger>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {scripts.map((option) => (
+                            <SelectItem key={option} value={option}>
+                                {scriptLabel(t, option)}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </div>
             <div className="grid gap-1">
                 <Label htmlFor={`${id}-family`} className="text-xs">
                     {t('Typeface name')}
@@ -578,7 +617,8 @@ function FontEditor({
                 </Label>
                 <Input
                     id={`${id}-sample`}
-                    lang={script === 'ethiopic' ? 'am' : 'en'}
+                    lang={{ ethiopic: 'am', latin: 'en', arabic: 'ar' }[script]}
+                    dir={script === 'arabic' ? 'rtl' : 'ltr'}
                     value={value.sample}
                     maxLength={300}
                     onChange={(event) =>
@@ -586,7 +626,7 @@ function FontEditor({
                     }
                 />
             </div>
-        </fieldset>
+        </div>
     );
 }
 

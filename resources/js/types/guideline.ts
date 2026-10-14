@@ -1,44 +1,55 @@
 import type { AssetKind, AssetStatus } from './asset';
 
-/**
+/*
  * Guideline page blocks, as stored by App\Guidelines\GuidelineBlocks. Keep
  * the two in step.
  */
-export type Bilingual = { en: string; am: string };
 
-export type FontSpec = {
+/** Text in each language, by language code. Missing means not written. */
+export type LocalText = Partial<Record<string, string>>;
+
+export type Script = 'ethiopic' | 'latin' | 'arabic';
+
+export type ContentLanguage = {
+    code: string;
+    name: string;
+    native: string;
+    script: Script;
+    dir: 'ltr' | 'rtl';
+};
+
+export type FontFaceSpec = {
+    script: Script;
     family: string;
     assetId: string | null;
     weight: number;
     sample: string;
 };
 
-export type HeadingBlock = { id: string; type: 'heading'; text: Bilingual };
+export type HeadingBlock = { id: string; type: 'heading'; text: LocalText };
 
-export type TextBlock = { id: string; type: 'text'; text: Bilingual };
+export type TextBlock = { id: string; type: 'text'; text: LocalText };
 
-export type Swatch = { name: Bilingual; hex: string; note: Bilingual };
+export type Swatch = { name: LocalText; hex: string; note: LocalText };
 
 export type ColoursBlock = { id: string; type: 'colours'; swatches: Swatch[] };
 
 export type TypeScaleRow = {
-    label: Bilingual;
-    latin: number;
-    ethiopic: number;
+    label: LocalText;
+    sizes: Partial<Record<Script, number>>;
 };
 
 export type TypePairingBlock = {
     id: string;
     type: 'type_pairing';
-    latin: FontSpec;
-    ethiopic: FontSpec;
+    faces: FontFaceSpec[];
     scale: TypeScaleRow[];
-    note: Bilingual;
+    note: LocalText;
 };
 
 export type LogoItem = {
     assetId: string | null;
-    caption: Bilingual;
+    caption: LocalText;
     background: 'light' | 'dark';
 };
 
@@ -47,7 +58,7 @@ export type LogosBlock = { id: string; type: 'logos'; items: LogoItem[] };
 export type DoDontItem = {
     kind: 'do' | 'dont';
     assetId: string | null;
-    caption: Bilingual;
+    caption: LocalText;
 };
 
 export type DosDontsBlock = {
@@ -81,10 +92,10 @@ export type GuidelineAsset = {
 
 export type GuidelinePageSummary = {
     id: string;
-    title: Bilingual;
+    title: LocalText;
     published: boolean;
     hasChanges: boolean;
 };
 
-/** Which language a reader shows. */
-export type ReadingLanguage = 'both' | 'en' | 'am';
+/** Which language a reader shows: a language code, or 'all' for every language. */
+export type ReadingLanguage = string;

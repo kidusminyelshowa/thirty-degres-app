@@ -11,7 +11,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * One page of a brand's guidelines, e.g. "Logo" or "Colour", written in
- * English and Amharic. Editors change the working copy (title and blocks);
+ * the brand's languages. Editors change the working copy (title and blocks);
  * publishing copies it to the published fields, which is what Viewers see.
  * The block shapes are described in App\Guidelines\GuidelineBlocks.
  *
@@ -19,11 +19,9 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property string $workspace_id
  * @property string $brand_id
  * @property int $position
- * @property string $title_en
- * @property string $title_am
+ * @property array<string, string> $title
  * @property list<array<string, mixed>> $blocks
- * @property string|null $published_title_en
- * @property string|null $published_title_am
+ * @property array<string, string>|null $published_title
  * @property list<array<string, mixed>>|null $published_blocks
  * @property int|null $created_by
  * @property int|null $edited_by
@@ -36,7 +34,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property-read User|null $editor
  * @property-read User|null $publisher
  */
-#[Fillable(['brand_id', 'position', 'title_en', 'title_am', 'blocks', 'created_by', 'edited_by', 'edited_at'])]
+#[Fillable(['brand_id', 'position', 'title', 'blocks', 'created_by', 'edited_by', 'edited_at'])]
 class GuidelinePage extends Model
 {
     use BelongsToWorkspace, HasUuids;
@@ -45,8 +43,7 @@ class GuidelinePage extends Model
      * @var array<string, mixed>
      */
     protected $attributes = [
-        'title_en' => '',
-        'title_am' => '',
+        'title' => '{}',
         'blocks' => '[]',
     ];
 
@@ -85,8 +82,7 @@ class GuidelinePage extends Model
     public function hasUnpublishedChanges(): bool
     {
         return ! $this->isPublished()
-            || $this->published_title_en !== $this->title_en
-            || $this->published_title_am !== $this->title_am
+            || $this->published_title != $this->title
             || $this->published_blocks !== $this->blocks;
     }
 
@@ -97,6 +93,8 @@ class GuidelinePage extends Model
     {
         return [
             'position' => 'integer',
+            'title' => 'array',
+            'published_title' => 'array',
             'blocks' => 'array',
             'published_blocks' => 'array',
             'edited_at' => 'datetime',

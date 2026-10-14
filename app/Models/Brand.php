@@ -17,6 +17,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property string $id
  * @property string|null $parent_id
  * @property string $name
+ * @property list<string> $guideline_languages
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read Brand|null $parent
@@ -61,5 +62,15 @@ class Brand extends Model
     public function isSubBrand(): bool
     {
         return $this->parent_id !== null;
+    }
+
+    /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'guideline_languages' => 'array',
+        ];
     }
 }

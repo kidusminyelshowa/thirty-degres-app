@@ -1,32 +1,46 @@
 import { useEffect, useState } from 'react';
 import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useTranslation } from '@/lib/i18n';
-import type { ReadingLanguage } from '@/types';
+import type { ContentLanguage, ReadingLanguage } from '@/types';
 
 const KEY = 'guidelines.language';
 
 /**
- * Which language guideline pages show, remembered on this device.
+ * Which language guideline pages show, remembered on this device. A
+ * language the brand does not use falls back to showing them all.
  */
-export function useReadingLanguage(): [
-    ReadingLanguage,
-    (language: ReadingLanguage) => void,
-] {
-    const [language, setLanguage] = useState<ReadingLanguage>('both');
+export function useReadingLanguage(
+    languages: ContentLanguage[],
+): [ReadingLanguage, (language: ReadingLanguage) => void] {
+    const [saved, setSaved] = useState<ReadingLanguage>('all');
 
     useEffect(() => {
-        const saved = window.localStorage.getItem(KEY);
+        try {
+            const stored = window.localStorage.getItem(KEY);
 
-        if (saved === 'en' || saved === 'am' || saved === 'both') {
-            setLanguage(saved);
+            if (stored) {
+                setSaved(stored);
+            }
+        } catch {
+            // Private windows can refuse storage; the default is fine.
         }
     }, []);
+
+    const language =
+        saved === 'all' || languages.some((l) => l.code === saved)
+            ? saved
+            : 'all';
 
     return [
         language,
         (next) => {
-            setLanguage(next);
-            window.localStorage.setItem(KEY, next);
+            setSaved(next);
+
+            try {
+                window.localStorage.setItem(KEY, next);
+            } catch {
+                // As above.
+            }
         },
     ];
 }
@@ -34,29 +48,42 @@ export function useReadingLanguage(): [
 export function LanguageToggle({
     value,
     onChange,
+    languages,
 }: {
     value: ReadingLanguage;
     onChange: (language: ReadingLanguage) => void;
+    languages: ContentLanguage[];
 }) {
     const { t } = useTranslation();
+
+    if (languages.length < 2) {
+        return null;
+    }
 
     return (
         <ToggleGroup
             type="single"
             variant="outline"
             value={value}
-            onValueChange={(next) => next && onChange(next as ReadingLanguage)}
+            onValueChange={(next) => next && onChange(next)}
             aria-label={t('Language')}
+            className="flex-wrap"
         >
-            <ToggleGroupItem value="both" className="px-3">
-                {t('Both')}
+            <ToggleGroupItem value="all" className="px-3">
+                {t('All')}
             </ToggleGroupItem>
-            <ToggleGroupItem value="am" lang="am" className="px-3">
-                አማርኛ
-            </ToggleGroupItem>
-            <ToggleGroupItem value="en" lang="en" className="px-3">
-                English
-            </ToggleGroupItem>
+            {languages.map((language) => (
+                <ToggleGroupItem
+                    key={language.code}
+                    value={language.code}
+                    lang={language.code}
+                    dir={language.dir}
+                    className="px-3"
+                    title={language.name}
+                >
+                    {language.native}
+                </ToggleGroupItem>
+            ))}
         </ToggleGroup>
     );
 }

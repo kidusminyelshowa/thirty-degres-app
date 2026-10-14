@@ -69,11 +69,12 @@ class GuidelineIsolationTest extends TestCase
         foreach ([$this->companyB, $this->companyA] as $workspace) {
             $this->get(route('workspaces.brands.guidelines.index', [$workspace, $this->brandOfB]))->assertNotFound();
             $this->post(route('workspaces.brands.guidelines.store', [$workspace, $this->brandOfB]), ['template' => 'logo'])->assertNotFound();
+            $this->put(route('workspaces.brands.guidelines.languages', [$workspace, $this->brandOfB]), ['languages' => ['en']])->assertNotFound();
 
             foreach ([$this->pageOfB, $this->draftOfB] as $page) {
                 $this->get(route('workspaces.guidelines.show', [$workspace, $page]))->assertNotFound();
                 $this->get(route('workspaces.guidelines.edit', [$workspace, $page]))->assertNotFound();
-                $this->put(route('workspaces.guidelines.update', [$workspace, $page]), ['title_en' => 'Taken', 'title_am' => '', 'blocks' => []])->assertNotFound();
+                $this->put(route('workspaces.guidelines.update', [$workspace, $page]), ['title' => ['en' => 'Taken'], 'blocks' => []])->assertNotFound();
                 $this->post(route('workspaces.guidelines.publish', [$workspace, $page]))->assertNotFound();
                 $this->post(route('workspaces.guidelines.move', [$workspace, $page]), ['direction' => 'up'])->assertNotFound();
                 $this->delete(route('workspaces.guidelines.destroy', [$workspace, $page]))->assertNotFound();
@@ -84,7 +85,8 @@ class GuidelineIsolationTest extends TestCase
 
         $this->inWorkspace($this->companyB, function () {
             $this->assertSame(2, GuidelinePage::count());
-            $this->assertSame('Secret launch colours', GuidelinePage::findOrFail($this->pageOfB->id)->title_en);
+            $this->assertSame(['am', 'en'], Brand::findOrFail($this->brandOfB->id)->guideline_languages);
+            $this->assertSame('Secret launch colours', GuidelinePage::findOrFail($this->pageOfB->id)->title['en']);
             $this->assertFalse(GuidelinePage::findOrFail($this->draftOfB->id)->isPublished());
         });
     }
@@ -109,11 +111,10 @@ class GuidelineIsolationTest extends TestCase
 
         $this->actingAs($this->ownerOfA)
             ->put(route('workspaces.guidelines.update', [$this->companyA, $page]), [
-                'title_en' => 'Logo',
-                'title_am' => '',
+                'title' => ['en' => 'Logo'],
                 'blocks' => [[
                     'type' => 'logos',
-                    'items' => [['assetId' => $this->logoOfB->id, 'caption' => ['en' => '', 'am' => ''], 'background' => 'light']],
+                    'items' => [['assetId' => $this->logoOfB->id, 'caption' => [], 'background' => 'light']],
                 ]],
             ])
             ->assertSessionHasErrors('blocks');
@@ -126,7 +127,7 @@ class GuidelineIsolationTest extends TestCase
         $this->inWorkspace($this->companyA, function () {
             $this->assertSame(0, DB::table('guideline_pages')->where('workspace_id', $this->companyB->id)->count());
             $this->assertSame(0, GuidelinePage::withoutGlobalScopes()->count());
-            $this->assertSame(0, DB::table('guideline_pages')->where('id', $this->pageOfB->id)->update(['title_en' => 'Taken']));
+            $this->assertSame(0, DB::table('guideline_pages')->where('id', $this->pageOfB->id)->update(['title' => '{"en": "Taken"}']));
             $this->assertSame(0, DB::table('guideline_pages')->where('id', $this->pageOfB->id)->delete());
 
             // A row filed under company B, and A's page on B's brand.

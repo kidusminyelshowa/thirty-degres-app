@@ -67,7 +67,7 @@ class GuidelinePageTest extends TestCase
 
         $this->inWorkspace($this->workspace, function () {
             $pages = GuidelinePage::orderBy('position')->get();
-            $this->assertSame(['Colour', 'Typography'], $pages->pluck('title_en')->all());
+            $this->assertSame(['Colour', 'Typography'], $pages->map(fn (GuidelinePage $page) => $page->title['en'])->all());
             $this->assertSame([0, 1], $pages->pluck('position')->all());
             $this->assertSame('colours', $pages[0]->blocks[1]['type']);
             $this->assertSame('type_pairing', $pages[1]->blocks[1]['type']);
@@ -76,7 +76,7 @@ class GuidelinePageTest extends TestCase
             $this->assertSame(2, ActivityLog::where('action', 'guideline.created')->count());
         });
 
-        $page = $this->inWorkspace($this->workspace, fn () => GuidelinePage::where('title_en', 'Colour')->sole());
+        $page = $this->inWorkspace($this->workspace, fn () => GuidelinePage::whereRaw("title->>'en' = 'Colour'")->sole());
 
         $this->actingAs($this->editor->user)
             ->get(route('workspaces.guidelines.edit', [$this->workspace, $page]))
@@ -114,8 +114,7 @@ class GuidelinePageTest extends TestCase
 
         $this->actingAs($this->editor->user)
             ->put(route('workspaces.guidelines.update', [$this->workspace, $page]), [
-                'title_en' => '  Colour ',
-                'title_am' => 'ቀለም',
+                'title' => ['en' => '  Colour ', 'am' => 'ቀለም', 'om' => 'Halluu', 'ar' => ''],
                 'blocks' => [
                     ['type' => 'heading', 'text' => ['en' => 'Our colours', 'am' => 'ቀለሞቻችን']],
                     ['id' => 'swatches', 'type' => 'colours', 'swatches' => [
@@ -128,14 +127,13 @@ class GuidelinePageTest extends TestCase
 
         $this->inWorkspace($this->workspace, function () use ($page) {
             $fresh = GuidelinePage::findOrFail($page->id);
-            $this->assertSame('Colour', $fresh->title_en);
-            $this->assertSame('ቀለም', $fresh->title_am);
+            $this->assertSame(['am' => 'ቀለም', 'en' => 'Colour', 'om' => 'Halluu'], $fresh->title);
             $this->assertCount(2, $fresh->blocks);
             $this->assertMatchesRegularExpression('/^[a-z0-9]{12}$/', $fresh->blocks[0]['id']);
-            $this->assertSame(['en' => 'Our colours', 'am' => 'ቀለሞቻችን'], $fresh->blocks[0]['text']);
+            $this->assertSame(['am' => 'ቀለሞቻችን', 'en' => 'Our colours'], $fresh->blocks[0]['text']);
             $this->assertSame('swatches', $fresh->blocks[1]['id']);
             $this->assertSame('#6F4E37', $fresh->blocks[1]['swatches'][0]['hex']);
-            $this->assertSame(['en' => '', 'am' => ''], $fresh->blocks[1]['swatches'][0]['note']);
+            $this->assertSame([], $fresh->blocks[1]['swatches'][0]['note']);
             $this->assertSame($this->editor->user_id, $fresh->edited_by);
         });
     }
@@ -144,7 +142,7 @@ class GuidelinePageTest extends TestCase
     {
         $page = $this->createGuidelinePage($this->brand, author: $this->editor->user);
         $save = fn (array $blocks, string $title = 'Logo') => $this->actingAs($this->editor->user)
-            ->put(route('workspaces.guidelines.update', [$this->workspace, $page]), ['title_en' => $title, 'title_am' => '', 'blocks' => $blocks]);
+            ->put(route('workspaces.guidelines.update', [$this->workspace, $page]), ['title' => ['en' => $title], 'blocks' => $blocks]);
 
         $save([['type' => 'script', 'text' => ['en' => '<script>', 'am' => '']]])->assertSessionHasErrors('blocks.0.type');
         $save([['type' => 'colours', 'swatches' => [['name' => ['en' => 'Red', 'am' => ''], 'hex' => 'red', 'note' => ['en' => '', 'am' => '']]]]])
@@ -152,7 +150,8 @@ class GuidelinePageTest extends TestCase
         $save([['type' => 'heading', 'text' => ['en' => str_repeat('a', 301), 'am' => '']]])->assertSessionHasErrors('blocks.0.text.en');
         $save([['type' => 'heading', 'text' => ['en' => 'Hi', 'am' => ''], 'html' => '<b>']])->assertSessionHasErrors('blocks.0');
         $save(array_fill(0, 61, ['type' => 'heading', 'text' => ['en' => 'Hi', 'am' => '']]))->assertSessionHasErrors('blocks');
-        $save([], '')->assertSessionHasErrors('title_en');
+        $save([], '')->assertSessionHasErrors('title');
+        $save([['type' => 'heading', 'text' => ['xx' => 'Unknown language']]])->assertSessionHasErrors('blocks.0.text');
 
         $this->inWorkspace($this->workspace, fn () => $this->assertSame('text', GuidelinePage::findOrFail($page->id)->blocks[0]['type']));
     }
@@ -165,18 +164,21 @@ class GuidelinePageTest extends TestCase
 
         $pairing = fn (string $assetId) => [[
             'type' => 'type_pairing',
-            'latin' => ['family' => 'Inter', 'assetId' => null, 'weight' => 400, 'sample' => 'Coffee'],
-            'ethiopic' => ['family' => 'Noto Serif Ethiopic', 'assetId' => $assetId, 'weight' => 500, 'sample' => 'ቡና'],
-            'scale' => [['label' => ['en' => 'Body', 'am' => ''], 'latin' => 16, 'ethiopic' => 17]],
-            'note' => ['en' => '', 'am' => ''],
+            'faces' => [
+                ['script' => 'ethiopic', 'family' => 'Noto Serif Ethiopic', 'assetId' => $assetId, 'weight' => 500, 'sample' => 'ቡና'],
+                ['script' => 'latin', 'family' => 'Inter', 'assetId' => null, 'weight' => 400, 'sample' => 'Coffee'],
+                ['script' => 'arabic', 'family' => '', 'assetId' => null, 'weight' => 400, 'sample' => 'قهوة'],
+            ],
+            'scale' => [['label' => ['en' => 'Body'], 'sizes' => ['ethiopic' => 17, 'latin' => 16, 'arabic' => 18]]],
+            'note' => [],
         ]];
 
         $this->actingAs($this->editor->user)
-            ->put(route('workspaces.guidelines.update', [$this->workspace, $page]), ['title_en' => 'Type', 'title_am' => '', 'blocks' => $pairing($logo->id)])
+            ->put(route('workspaces.guidelines.update', [$this->workspace, $page]), ['title' => ['en' => 'Type'], 'blocks' => $pairing($logo->id)])
             ->assertSessionHasErrors('blocks');
 
         $this->actingAs($this->editor->user)
-            ->put(route('workspaces.guidelines.update', [$this->workspace, $page]), ['title_en' => 'Type', 'title_am' => '', 'blocks' => $pairing($font->id)])
+            ->put(route('workspaces.guidelines.update', [$this->workspace, $page]), ['title' => ['en' => 'Type'], 'blocks' => $pairing($font->id)])
             ->assertSessionHasNoErrors();
 
         $this->actingAs($this->viewer->user)
@@ -204,8 +206,7 @@ class GuidelinePageTest extends TestCase
         // The editor keeps working; Viewers still see what was published.
         $this->actingAs($this->editor->user)
             ->put(route('workspaces.guidelines.update', [$this->workspace, $page]), [
-                'title_en' => 'Logo v2',
-                'title_am' => '',
+                'title' => ['en' => 'Logo v2'],
                 'blocks' => [['type' => 'text', 'text' => ['en' => 'Unreleased rule', 'am' => '']]],
             ])
             ->assertSessionHasNoErrors();
@@ -216,6 +217,8 @@ class GuidelinePageTest extends TestCase
                 ->component('guidelines/show')
                 ->where('page.title.en', 'Logo')
                 ->where('page.title.am', 'አርማ')
+                ->where('languages.0.code', 'am')
+                ->where('languages.1.code', 'en')
                 ->where('page.blocks.0.text.am', 'አርማውን በነጭ ላይ ተጠቀሙ።')
                 ->where('page.hasChanges', false)
                 ->where('can.update', false)
@@ -257,8 +260,7 @@ class GuidelinePageTest extends TestCase
             $this->expectException(QueryException::class);
 
             DB::table('guideline_pages')->where('id', $page->id)->update([
-                'published_title_en' => 'Logo',
-                'published_title_am' => '',
+                'published_title' => '{"en": "Logo"}',
                 'published_blocks' => '[]',
                 'published_by' => $this->manager->user_id,
                 'published_at' => now(),
@@ -342,7 +344,7 @@ class GuidelinePageTest extends TestCase
             ->get(route('workspaces.guidelines.show', [$this->workspace, $published]))
             ->assertOk();
         $this->actingAs($partner->user)
-            ->put(route('workspaces.guidelines.update', [$this->workspace, $published]), ['title_en' => 'Taken', 'title_am' => '', 'blocks' => []])
+            ->put(route('workspaces.guidelines.update', [$this->workspace, $published]), ['title' => ['en' => 'Taken'], 'blocks' => []])
             ->assertForbidden();
         $this->actingAs($partner->user)
             ->post(route('workspaces.guidelines.move', [$this->workspace, $published]), ['direction' => 'up'])
@@ -355,7 +357,7 @@ class GuidelinePageTest extends TestCase
         $own = $this->inWorkspace($this->workspace, fn () => GuidelinePage::where('created_by', $partner->user_id)->sole());
 
         $this->actingAs($partner->user)
-            ->put(route('workspaces.guidelines.update', [$this->workspace, $own]), ['title_en' => 'Voice', 'title_am' => 'ድምፅ', 'blocks' => []])
+            ->put(route('workspaces.guidelines.update', [$this->workspace, $own]), ['title' => ['en' => 'Voice', 'ti' => 'ድምፂ'], 'blocks' => []])
             ->assertSessionHasNoErrors();
         $this->actingAs($partner->user)
             ->post(route('workspaces.guidelines.publish', [$this->workspace, $own]))
@@ -377,7 +379,7 @@ class GuidelinePageTest extends TestCase
 
         $this->inWorkspace($this->workspace, fn () => $this->assertSame(
             ['Logo', 'Type', 'Colour'],
-            GuidelinePage::orderBy('position')->pluck('title_en')->all(),
+            GuidelinePage::orderBy('position')->get()->map(fn (GuidelinePage $page) => $page->title['en'])->all(),
         ));
 
         $this->actingAs($this->viewer->user)
@@ -425,5 +427,44 @@ class GuidelinePageTest extends TestCase
         $this->actingAs($outsider->user)
             ->get(route('workspaces.guidelines.index', $this->workspace))
             ->assertInertia(fn (Assert $page) => $page->has('brands', 0));
+    }
+
+    public function test_brand_managers_choose_the_brands_languages_and_their_order()
+    {
+        $page = $this->createGuidelinePage($this->brand, publisher: User::factory()->create());
+
+        $this->actingAs($this->manager->user)
+            ->put(route('workspaces.brands.guidelines.languages', [$this->workspace, $this->brand]), ['languages' => ['om', 'am', 'en', 'ar']])
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($this->viewer->user)
+            ->get(route('workspaces.guidelines.show', [$this->workspace, $page]))
+            ->assertInertia(fn (Assert $inertia) => $inertia
+                ->where('languages', fn ($languages) => collect($languages)->pluck('code')->all() === ['om', 'am', 'en', 'ar'])
+                ->where('languages.3.dir', 'rtl')
+                ->where('languages.1.script', 'ethiopic')
+                ->where('can.setLanguages', false));
+
+        foreach ([[], ['am', 'am'], ['xx'], array_fill(0, 9, 'en')] as $invalid) {
+            $this->actingAs($this->manager->user)
+                ->put(route('workspaces.brands.guidelines.languages', [$this->workspace, $this->brand]), ['languages' => $invalid])
+                ->assertSessionHasErrors();
+        }
+
+        foreach ([$this->editor, $this->viewer] as $member) {
+            $this->actingAs($member->user)
+                ->put(route('workspaces.brands.guidelines.languages', [$this->workspace, $this->brand]), ['languages' => ['en']])
+                ->assertForbidden();
+        }
+
+        $this->inWorkspace($this->workspace, function () {
+            $this->assertSame(['om', 'am', 'en', 'ar'], Brand::findOrFail($this->brand->id)->guideline_languages);
+            $this->assertSame(1, ActivityLog::where('action', 'brand.guideline_languages')->count());
+        });
+    }
+
+    public function test_new_and_existing_brands_start_with_amharic_and_english()
+    {
+        $this->inWorkspace($this->workspace, fn () => $this->assertSame(['am', 'en'], Brand::findOrFail($this->brand->id)->guideline_languages));
     }
 }

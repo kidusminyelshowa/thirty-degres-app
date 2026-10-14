@@ -31,8 +31,7 @@ trait CreatesGuidelines
             $page = GuidelinePage::create([
                 'brand_id' => $brand->id,
                 'position' => $position,
-                'title_en' => $title,
-                'title_am' => 'አርማ',
+                'title' => ['en' => $title, 'am' => 'አርማ'],
                 'blocks' => $blocks,
                 'created_by' => $author->id,
                 'edited_by' => $author->id,
@@ -40,8 +39,7 @@ trait CreatesGuidelines
             ]);
 
             if ($publisher !== null) {
-                $page->published_title_en = $page->title_en;
-                $page->published_title_am = $page->title_am;
+                $page->published_title = $page->title;
                 $page->published_blocks = $page->blocks;
                 $page->published_by = $publisher->id;
                 $page->published_at = now();

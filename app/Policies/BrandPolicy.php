@@ -54,4 +54,12 @@ class BrandPolicy
             && ! $actor->isPartner()
             && $this->access->roleOn($brand) === BrandRoleName::Manager;
     }
+
+    /**
+     * Choose the languages the brand's guidelines are written in.
+     */
+    public function setGuidelineLanguages(User $user, Brand $brand): bool
+    {
+        return $this->manageAccess($user, $brand);
+    }
 }
