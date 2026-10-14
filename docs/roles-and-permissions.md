@@ -185,6 +185,14 @@ Tests and CI must run as the restricted app role, not the `postgres` superuser, 
 - Accepting an invitation uses a third setting, `app.invitation_token_hash`, instead of a `SECURITY DEFINER` function: Postgres shows the one invitation whose hashed secret the request carries, and that workspace's name. It works the same for a non-superuser owner.
 - Not yet enforced: two-factor or passkey for Owners and Admins (rule 6). It would block the first sign-up on a preview until two-factor is set up, so it ships with the security settings work.
 
+### What THI-36 built
+
+- Tables `brands`, `brand_roles`, `assets`, `tags` and `asset_tag`, each locked by row-level security, with every link between them including `workspace_id`.
+- Brand roles (Brand manager, Editor, Viewer) on brands and one level of sub-brands. `App\Assets\BrandAccess` works out a person's role on each brand; Owners and Admins are Brand manager everywhere, and partners are capped at Editor.
+- The role table above for files, in `AssetPolicy`, with the same rules for lists in `App\Assets\VisibleAssets`.
+- Two database rules: a trigger refuses `approved_by = uploaded_by` unless the workspace has `allow_self_approval` on (an Owner can turn it on from the workspace home), and another refuses a partner as Brand manager.
+- Not yet: the region list on brand roles, and "last edited" counting as authorship for approval (files cannot be replaced yet, only renamed and tagged).
+
 ## Defaults picked here, easy to change
 
 These are product choices more than technical ones. Each is one setting.

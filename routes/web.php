@@ -1,10 +1,16 @@
 <?php
 
+use App\Http\Controllers\Assets\AssetController;
+use App\Http\Controllers\Assets\AssetStatusController;
+use App\Http\Controllers\Assets\LibraryController;
+use App\Http\Controllers\Brands\BrandAccessController;
+use App\Http\Controllers\Brands\BrandController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Workspaces\AcceptInvitationController;
 use App\Http\Controllers\Workspaces\InvitationController;
 use App\Http\Controllers\Workspaces\MemberController;
 use App\Http\Controllers\Workspaces\WorkspaceController;
+use App\Http\Controllers\Workspaces\WorkspaceSettingsController;
 use Illuminate\Support\Facades\Route;
 
 Route::inertia('/', 'welcome')->name('home');
@@ -32,6 +38,31 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
             Route::post('invitations', [InvitationController::class, 'store'])->middleware('throttle:20,1')->name('invitations.store');
             Route::delete('invitations/{invitation}', [InvitationController::class, 'destroy'])->whereUuid('invitation')->name('invitations.destroy');
+
+            Route::patch('settings/approval', [WorkspaceSettingsController::class, 'updateApproval'])->name('settings.approval');
+
+            Route::get('library', [LibraryController::class, 'index'])->name('library');
+
+            Route::post('brands', [BrandController::class, 'store'])->name('brands.store');
+            Route::whereUuid(['brand', 'brandRole'])->group(function () {
+                Route::get('brands/{brand}', [LibraryController::class, 'brand'])->name('brands.show');
+                Route::patch('brands/{brand}', [BrandController::class, 'update'])->name('brands.update');
+                Route::get('brands/{brand}/access', [BrandAccessController::class, 'index'])->name('brands.access.index');
+                Route::post('brands/{brand}/access', [BrandAccessController::class, 'store'])->name('brands.access.store');
+                Route::delete('brands/{brand}/access/{brandRole}', [BrandAccessController::class, 'destroy'])->name('brands.access.destroy');
+                Route::post('brands/{brand}/assets', [AssetController::class, 'store'])->middleware('throttle:120,1')->name('brands.assets.store');
+            });
+
+            Route::whereUuid('asset')->prefix('assets/{asset}')->name('assets.')->group(function () {
+                Route::get('/', [AssetController::class, 'show'])->name('show');
+                Route::patch('/', [AssetController::class, 'update'])->name('update');
+                Route::delete('/', [AssetController::class, 'destroy'])->name('destroy');
+                Route::get('download', [AssetController::class, 'download'])->middleware('throttle:120,1')->name('download');
+                Route::get('preview', [AssetController::class, 'preview'])->name('preview');
+                Route::post('approve', [AssetStatusController::class, 'approve'])->name('approve');
+                Route::post('archive', [AssetStatusController::class, 'archive'])->name('archive');
+                Route::post('restore', [AssetStatusController::class, 'restore'])->name('restore');
+            });
         });
 });
 

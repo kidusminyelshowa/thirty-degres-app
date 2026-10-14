@@ -27,8 +27,15 @@ One Laravel application serves the React screens through Inertia, so there is no
 
 Every brand workspace's data is separated by Laravel policies and query scopes in the app, and by Postgres row-level security underneath. Roles, partners, share links and the three locks are designed in [roles-and-permissions.md](roles-and-permissions.md) (THI-11). Tests must prove one workspace cannot read another's assets.
 
+## Asset library (THI-36)
+
+- Files belong to a brand and start as **drafts**. A Brand manager who did not upload a file approves it; only approved files reach Viewers. Approved files are archived rather than deleted.
+- The original is stored as uploaded at `workspaces/{workspace}/assets/{asset}/original.{ext}` on the default disk (`FILESYSTEM_DISK`), never under the uploader's file name. Downloads stream it back as an attachment.
+- Pages only show **previews**: a WebP at most 800 px on its longest side, made with PHP's GD when a JPEG, PNG, WebP or GIF is uploaded. SVG logos are their own preview, served with a sandbox policy so scripts inside them cannot run. Fonts and documents show an icon.
+- Previews are made during the upload request, so they work without a queue worker. Move this to a queued job once a worker runs in every environment.
+- Tags are shared across a workspace's brands; search matches file names and tags.
+
 ## Not decided yet
 
-- Asset data model (THI-13); workspaces, brands and memberships are in [roles-and-permissions.md](roles-and-permissions.md)
-- Image and video rendition pipeline details
+- Video previews, and previews of PDFs and design files (they show an icon for now)
 - Billing through Chapa (paid plans come after the free pilot)
