@@ -24,10 +24,10 @@ One Laravel application serves the React screens through Inertia, so there is no
 
 ## Tenant isolation
 
-Every brand workspace's data is separated twice: Laravel policies and query scopes in the app, and Postgres row-level security underneath (to be designed in THI-11). Tests must prove one workspace cannot read another's assets.
+Every brand workspace's data is separated by Laravel policies and query scopes in the app, and by Postgres row-level security underneath. Roles, partners, share links and the three locks are designed in [roles-and-permissions.md](roles-and-permissions.md) (THI-11). Tests must prove one workspace cannot read another's assets.
 
 ## Not decided yet
 
-- Workspace, brand and asset data model (THI-11, THI-13)
+- Asset data model (THI-13); workspaces, brands and memberships are in [roles-and-permissions.md](roles-and-permissions.md)
 - Image and video rendition pipeline details
 - Billing through Chapa (paid plans come after the free pilot)
