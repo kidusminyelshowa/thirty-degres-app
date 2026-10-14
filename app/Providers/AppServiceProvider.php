@@ -2,6 +2,7 @@
 
 namespace App\Providers;
 
+use App\Assets\BrandAccess;
 use App\Tenancy\DatabaseRole;
 use App\Tenancy\Tenancy;
 use Carbon\CarbonImmutable;
@@ -19,6 +20,7 @@ class AppServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->scoped(Tenancy::class);
+        $this->app->scoped(BrandAccess::class);
         $this->app->singleton(DatabaseRole::class);
     }
 
