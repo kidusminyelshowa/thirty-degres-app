@@ -148,7 +148,7 @@ Row-level security does nothing for a Postgres superuser or a role with `BYPASSR
 - Every company table gets `ENABLE` and `FORCE ROW LEVEL SECURITY` and one policy: `workspace_id = current_workspace_id()`, for both reading and writing.
 - A `NOLOGIN` role `thirty_app` without `BYPASSRLS` gets read and write grants on app tables. On connecting, the app runs `SET ROLE thirty_app`, so every app query runs under the policies. This works on any Postgres, Laravel Cloud or a server in Addis Ababa, with no special hosting features.
 - `current_workspace_id()` is a small SQL function reading `current_setting('app.workspace_id', true)`, returning null (no rows) when unset.
-- **To check in THI-35:** what attributes Laravel Cloud's database user has (some managed Postgres services give it `BYPASSRLS`). `SET ROLE` handles that case, but a test must prove it on the preview database.
+- **To check in THI-35:** what attributes Laravel Cloud's database user has (some managed Postgres services give it `BYPASSRLS`). `SET ROLE` handles that case, but a test must prove it on the preview database. `php artisan tenancy:check` does that on any host: it fails if queries can skip row-level security, if the role switch is lost between queries (a transaction pooler), or if a company table is unlocked.
 
 ### Setting the current workspace
 
@@ -176,6 +176,14 @@ These are the automated proof that the locks work. THI-35 adds the first of each
 5. **Segregation rules.** Self-approval refused, self-promotion refused, last Owner cannot leave, Admin cannot touch an Owner.
 
 Tests and CI must run as the restricted app role, not the `postgres` superuser, or the database lock is silently skipped. THI-35 adds a `thirty_app` role to the CI database and to `.env.example`.
+
+### What THI-35 built
+
+- Tables `workspaces`, `memberships`, `invitations` and `activity_log`, locked by row-level security. Brands, brand roles and share links come with the features that need them.
+- The migration creates the `thirty_app` role (name set by `DB_APP_ROLE`, default `thirty_app`). The app switches to it the moment it connects (`App\Tenancy\DatabaseRole`), and only migrations, `db:wipe` and seeding run as the login user. Tests do the same, so the test suite exercises the real policies.
+- `App\Tenancy\Tenancy` holds the current workspace and sets `app.workspace_id` and `app.user_id`; it clears them after every request.
+- Accepting an invitation uses a third setting, `app.invitation_token_hash`, instead of a `SECURITY DEFINER` function: Postgres shows the one invitation whose hashed secret the request carries, and that workspace's name. It works the same for a non-superuser owner.
+- Not yet enforced: two-factor or passkey for Owners and Admins (rule 6). It would block the first sign-up on a preview until two-factor is set up, so it ships with the security settings work.
 
 ## Defaults picked here, easy to change
 
