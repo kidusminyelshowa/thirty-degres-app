@@ -1,6 +1,6 @@
 # Thirty Degres
 
-A brand operating system for Ethiopian and East African companies: brand assets, guidelines, templates and voice in one place, built for Amharic,Afan Oroma, Swahili and English and for low-bandwidth connections.
+A brand operating system for Ethiopian and East African companies: brand assets, guidelines, templates and voice in one place, built for Amharic, Afan Oroma, Swahili and English and for low-bandwidth connections.
 
 Built with Laravel 13, React 19 and Postgres. See [docs/architecture.md](docs/architecture.md) for the stack and hosting plan, and [CLAUDE.md](CLAUDE.md) for development rules.
 
