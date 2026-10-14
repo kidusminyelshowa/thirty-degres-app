@@ -14,6 +14,7 @@ One Laravel application serves the React screens through Inertia, so there is no
 | Database        | Postgres                                                                   | Row-level security for tenant isolation; runs the same in Laravel Cloud and in an Ethiopian data centre                     |
 | Files           | Laravel `Storage` on an S3-compatible bucket (Cloudflare R2 for the pilot) | Free egress keeps download costs low; any S3-compatible store can replace it                                                |
 | Background jobs | Laravel queues                                                             | Preview renditions and zipped brand kits without slowing pages                                                              |
+| Email           | Resend through Laravel's `Mail` facade, sent from thirtydegres.xyz         | 3,000 free emails a month; swapping provider is a config change, not a code change                                          |
 | Fonts           | Self-hosted Instrument Sans and Noto Sans Ethiopic                         | No third-party CDN; Ethiopic files load only when a page shows Ge'ez text                                                   |
 
 ## Hosting
