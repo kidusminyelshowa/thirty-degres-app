@@ -193,6 +193,13 @@ Tests and CI must run as the restricted app role, not the `postgres` superuser, 
 - Two database rules: a trigger refuses `approved_by = uploaded_by` unless the workspace has `allow_self_approval` on (an Owner can turn it on from the workspace home), and another refuses a partner as Brand manager.
 - Not yet: the region list on brand roles, and "last edited" counting as authorship for approval (files cannot be replaced yet, only renamed and tagged).
 
+### What THI-37 built
+
+- Table `guideline_pages`, locked by row-level security and linked to its brand through `(workspace_id, brand_id)`. Each page keeps the working copy Editors change and the copy last published, which is all Viewers see.
+- The role table above for guidelines, in `GuidelinePagePolicy`: Viewers see published pages; Editors write and save drafts (partner Editors only pages they started); Brand managers publish and delete; staff Editors and Brand managers reorder pages.
+- A database trigger refuses `published_by = edited_by` unless the workspace has `allow_self_approval` on, the same rule as for files. Publishing also waits until every file on the page is approved, since Viewers could not see a draft file.
+- A page can only use files from its brand or the parent brand that the editor can see, and only font files as typefaces. Readers get only the files they may see.
+
 ## Defaults picked here, easy to change
 
 These are product choices more than technical ones. Each is one setting.

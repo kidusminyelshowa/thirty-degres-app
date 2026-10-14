@@ -12,6 +12,7 @@ use App\Models\Brand;
 use App\Models\Tag;
 use App\Models\User;
 use App\Models\Workspace;
+use App\Tenancy\Tenancy;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -179,6 +180,37 @@ class AssetController extends Controller
             'X-Content-Type-Options' => 'nosniff',
             // An SVG can carry scripts. Opened on its own, it must not run them.
             'Content-Security-Policy' => "default-src 'none'; style-src 'unsafe-inline'; img-src data:; sandbox",
+        ]);
+    }
+
+    /**
+     * A font file, so guideline pages can show type in the brand's own
+     * typeface. Partners' use is logged like a download.
+     */
+    public function font(Workspace $workspace, Asset $asset): StreamedResponse
+    {
+        abort_unless(Gate::allows('view', $asset), 404);
+
+        $type = match ($asset->extension) {
+            'woff2' => 'font/woff2',
+            'woff' => 'font/woff',
+            'ttf' => 'font/ttf',
+            'otf' => 'font/otf',
+            default => null,
+        };
+        abort_if($type === null, 404);
+
+        $disk = Storage::disk($asset->disk);
+        abort_unless($disk->exists($asset->path), 404);
+
+        if (app(Tenancy::class)->membership()?->isPartner() ?? false) {
+            ActivityLog::record('asset.font_loaded', $asset, ['name' => $asset->name]);
+        }
+
+        return $disk->response($asset->path, null, [
+            'Content-Type' => $type,
+            'Cache-Control' => 'private, max-age=604800',
+            'X-Content-Type-Options' => 'nosniff',
         ]);
     }
 
