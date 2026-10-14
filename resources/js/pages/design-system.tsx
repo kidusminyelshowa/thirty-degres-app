@@ -200,7 +200,7 @@ export default function DesignSystem() {
                                 </div>
                                 <div className="flex flex-wrap gap-2">
                                     <Button>አስቀምጥ</Button>
-                                    <Button variant="outline">ፋይል ስቀል</Button>
+                                    <Button variant="outline">ጫን</Button>
                                     <Badge>ጸድቋል</Badge>
                                 </div>
                             </CardContent>
