@@ -27,5 +27,5 @@ Local Postgres defaults are in `.env.example` (`thirty_degres`, and `thirty_degr
 4. Tenant safety is the top risk. Any query on tenant data must be scoped to the current workspace, authorised with a Laravel policy, and covered by a test that tries to read another workspace's data. Postgres row-level security will be added as a second lock (THI-11).
 5. Keep it portable: files go through Laravel's `Storage` facade (S3-compatible disk in production), never a vendor SDK directly; no Laravel Cloud-only APIs in app code.
 6. Low bandwidth is the default: serve resized previews, not originals; lazy-load images; no new third-party CDNs (fonts are self-hosted via `@fontsource`).
-7. All user-facing text goes through translation helpers so Amharic can be added. Test layouts with Ge'ez text, which runs taller than Latin.
+7. All user-facing text goes through translation helpers so Amharic can be added. Test layouts with Ge'ez text, which runs taller than Latin. Use the agreed Amharic words in `docs/design-system.md`.
 8. Don't commit secrets. Configuration goes in `.env` and `.env.example`.

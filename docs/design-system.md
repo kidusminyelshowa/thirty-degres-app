@@ -19,7 +19,7 @@ Screens use colour roles (`bg-primary`, `text-muted-foreground`, `border-border`
 
 - **Latin:** Instrument Sans, self-hosted.
 - **Ge'ez (Amharic, Tigrinya):** Noto Sans Ethiopic, self-hosted. Browsers only download it when a page shows Ethiopic text.
-- **Studio font:** the studio site uses Loos Normal, a commercial typeface. It is not in the app because using a font inside a web product usually needs a separate web/app licence. If Thirty Degres holds one, it can replace Instrument Sans in one line.
+- The full brand look will be designed by Kidus later; until then these two fonts and the palette above stand. The studio's Loos Normal is not used.
 - Use Tailwind's size scale: `text-4xl` display, `text-2xl` heading, `text-lg` subheading, `text-base` body, `text-sm` small.
 
 ## Ge'ez rules
@@ -29,3 +29,12 @@ Screens use colour roles (`bg-primary`, `text-muted-foreground`, `border-border`
 3. Prefer `font-medium` or `font-semibold` over `font-bold` for Ethiopic headings; heavy weights fill in the small counters.
 4. Leave room in layouts: Amharic labels are often shorter than English but taller. Buttons and table rows must not have a fixed height that clips them.
 5. Every screen change is checked with Amharic text before it ships (CLAUDE.md rule 7).
+
+## Amharic words
+
+Use these terms in every screen so the interface stays consistent. Add new ones here as they are agreed.
+
+| English  | Amharic |
+| -------- | ------- |
+| Upload   | ጫን      |
+| Download | አውርድ    |
