@@ -33,6 +33,8 @@ class MailTest extends TestCase
             'email' => 'abebe@example.com',
             'password' => 'password',
             'password_confirmation' => 'password',
+            'workspace_name' => 'Bikila Running Club',
+            'data_transfer_consent' => '1',
         ]);
 
         $user = User::where('email', 'abebe@example.com')->firstOrFail();

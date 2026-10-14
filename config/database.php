@@ -97,6 +97,9 @@ return [
             'prefix_indexes' => true,
             'search_path' => 'public',
             'sslmode' => env('DB_SSLMODE', 'prefer'),
+            // Restricted role every app query runs as, so Postgres row-level
+            // security applies (docs/roles-and-permissions.md). Empty turns it off.
+            'app_role' => env('DB_APP_ROLE', 'thirty_app'),
         ],
 
         'sqlsrv' => [

@@ -1,5 +1,5 @@
-import { Link } from '@inertiajs/react';
-import { LayoutGrid } from 'lucide-react';
+import { Link, usePage } from '@inertiajs/react';
+import { Home, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -12,18 +12,36 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { WorkspaceSwitcher } from '@/components/workspace-switcher';
+import { useTranslation } from '@/lib/i18n';
 import { dashboard } from '@/routes';
+import { show } from '@/routes/workspaces';
+import { index as members } from '@/routes/workspaces/members';
 import type { NavItem } from '@/types';
 
-const mainNavItems: NavItem[] = [
-    {
-        title: 'Dashboard',
-        href: dashboard(),
-        icon: LayoutGrid,
-    },
-];
-
 export function AppSidebar() {
+    const { t } = useTranslation();
+    const { currentWorkspace } = usePage().props;
+
+    const mainNavItems: NavItem[] = currentWorkspace
+        ? [
+              {
+                  title: t('Home'),
+                  href: show(currentWorkspace.slug),
+                  icon: Home,
+              },
+              ...(currentWorkspace.canManageMembers
+                  ? [
+                        {
+                            title: t('People'),
+                            href: members(currentWorkspace.slug),
+                            icon: Users,
+                        },
+                    ]
+                  : []),
+          ]
+        : [];
+
     return (
         <Sidebar collapsible="icon" variant="inset">
             <SidebarHeader>
@@ -36,6 +54,7 @@ export function AppSidebar() {
                         </SidebarMenuButton>
                     </SidebarMenuItem>
                 </SidebarMenu>
+                <WorkspaceSwitcher />
             </SidebarHeader>
 
             <SidebarContent>

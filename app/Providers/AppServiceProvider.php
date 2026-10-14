@@ -2,7 +2,10 @@
 
 namespace App\Providers;
 
+use App\Tenancy\DatabaseRole;
+use App\Tenancy\Tenancy;
 use Carbon\CarbonImmutable;
+use Illuminate\Contracts\Events\Dispatcher;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -15,7 +18,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->scoped(Tenancy::class);
+        $this->app->singleton(DatabaseRole::class);
     }
 
     /**
@@ -24,6 +28,8 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+
+        $this->app->make(DatabaseRole::class)->register($this->app->make(Dispatcher::class));
     }
 
     /**

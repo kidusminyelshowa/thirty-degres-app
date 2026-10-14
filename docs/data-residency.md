@@ -32,7 +32,7 @@ The data laws below protect information about identifiable people. They do not c
 ## What we do now (pilot on Laravel Cloud, Frankfurt)
 
 1. **Every client** signs a data processing agreement that names Frankfurt as the hosting location for the pilot.
-2. **Ethiopian users** give explicit, informed consent to storage outside Ethiopia when they sign up. This is a checkbox with plain wording, recorded with a timestamp. It is planned for build week 1 (THI-35).
+2. **Ethiopian users** give explicit, informed consent to storage outside Ethiopia when they sign up. This is a checkbox with plain wording, recorded with a timestamp (`users.data_transfer_consent_at`). Built in build week 1 (THI-35); every new account must tick it, including invited teammates.
 3. **Collect as little personal data as possible:** no ID documents or phone numbers unless needed. Ask clients not to upload sensitive imagery.
 4. **Keep a transfer record** for Kenyan clients.
 5. **Don't pilot** with Ethiopian banks, telecoms or government, or with Kenyan Regulation 26 sectors, until in-country hosting exists.
