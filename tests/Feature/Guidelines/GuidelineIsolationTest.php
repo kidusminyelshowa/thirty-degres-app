@@ -147,4 +147,3 @@ class GuidelineIsolationTest extends TestCase
         });
     }
 }
-
