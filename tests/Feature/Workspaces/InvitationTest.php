@@ -126,7 +126,7 @@ class InvitationTest extends TestCase
         });
     }
 
-    public function test_signing_up_with_a_different_email_does_not_use_the_invitation()
+    public function test_signing_up_from_an_invitation_with_a_different_email_says_which_address_to_use()
     {
         [, $token] = $this->createInvitation($this->workspace);
         $this->get(route('invitations.show', $token));
@@ -137,7 +137,12 @@ class InvitationTest extends TestCase
             'password' => 'password',
             'password_confirmation' => 'password',
             'data_transfer_consent' => '1',
-        ])->assertSessionHasErrors('workspace_name');
+        ])->assertSessionHasErrors([
+            'email' => 'This invitation was sent to teammate@example.com. Sign up with that address to join Ethio Coffee.',
+        ]);
+
+        $this->assertGuest();
+        $this->assertDatabaseMissing('users', ['email' => 'someone.else@example.com']);
     }
 
     public function test_expired_used_and_unknown_links_do_not_work()

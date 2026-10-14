@@ -11,6 +11,7 @@ use App\Models\Invitation;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Validator as ValidatorInstance;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
 
 class CreateNewUser implements CreatesNewUsers
@@ -30,9 +31,10 @@ class CreateNewUser implements CreatesNewUsers
      */
     public function create(array $input): User
     {
-        $invitation = $this->pendingInvitationFor($input['email'] ?? null);
+        $pending = $this->pendingInvitation();
+        $invitation = $pending !== null && strcasecmp($pending->email, (string) ($input['email'] ?? '')) === 0 ? $pending : null;
 
-        Validator::make($input, [
+        $validator = Validator::make($input, [
             ...$this->profileRules(),
             'password' => $this->passwordRules(),
             'workspace_name' => [$invitation === null ? 'required' : 'nullable', 'string', 'max:120'],
@@ -42,7 +44,20 @@ class CreateNewUser implements CreatesNewUsers
         ], [
             'workspace_name.required' => __('Enter your company name.'),
             'data_transfer_consent.accepted' => __('Please agree to where your data is stored to continue.'),
-        ])->validate();
+        ]);
+
+        // Someone signing up from an invitation link with a different address
+        // would otherwise only be asked for a company name the page hides.
+        $validator->after(function (ValidatorInstance $validator) use ($pending, $invitation): void {
+            if ($pending !== null && $invitation === null) {
+                $validator->errors()->add('email', __('This invitation was sent to :email. Sign up with that address to join :workspace.', [
+                    'email' => $pending->email,
+                    'workspace' => $pending->workspace->name,
+                ]));
+            }
+        });
+
+        $validator->validate();
 
         return DB::transaction(function () use ($input, $invitation) {
             $user = User::create([
@@ -65,19 +80,12 @@ class CreateNewUser implements CreatesNewUsers
     }
 
     /**
-     * The invitation link this person opened before signing up, if it was
-     * sent to the email address they are signing up with.
+     * The still-valid invitation link this person opened before signing up.
      */
-    private function pendingInvitationFor(?string $email): ?Invitation
+    private function pendingInvitation(): ?Invitation
     {
         $token = session(AcceptInvitationController::SESSION_KEY);
 
-        if (! is_string($token) || $email === null) {
-            return null;
-        }
-
-        $invitation = $this->acceptInvitation->find($token);
-
-        return $invitation !== null && strcasecmp($invitation->email, $email) === 0 ? $invitation : null;
+        return is_string($token) ? $this->acceptInvitation->find($token) : null;
     }
 }

@@ -78,7 +78,7 @@ export default function Register({ passwordRules, invitation }: Props) {
                                 <InputError message={errors.email} />
                             </div>
 
-                            {!invitation && (
+                            {(!invitation || errors.workspace_name) && (
                                 <div className="grid gap-2">
                                     <Label htmlFor="workspace_name">
                                         {t('Company name')}
