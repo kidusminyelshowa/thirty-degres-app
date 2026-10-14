@@ -52,5 +52,10 @@ jobs:
       - name: Setup Application
         run: composer setup
 
+      - name: Check dependencies for known vulnerabilities
+        run: |
+          composer audit --locked --abandoned=report
+          npm audit --omit=dev --audit-level=high
+
       - name: Run CI Checks
         run: composer ci:check
