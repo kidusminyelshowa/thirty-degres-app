@@ -1,0 +1,31 @@
+# Design system
+
+Decided 14 October 2026 (Linear THI-27). Colours and type live in `resources/css/app.css`; open `/design-system` on any preview link to see them in light and dark mode, in English and Amharic.
+
+## Colours
+
+The brand palette comes from the Thirty Degres studio identity.
+
+| Name  | Hex       | Use                                                |
+| ----- | --------- | -------------------------------------------------- |
+| Ink   | `#022018` | Text, primary buttons (light mode)                 |
+| Mist  | `#F6F9F7` | Page background (light mode)                       |
+| Green | `#01803B` | Brand accent, links, focus rings                   |
+| Lime  | `#D1F811` | Highlights and active states; primary in dark mode |
+
+Screens use colour roles (`bg-primary`, `text-muted-foreground`, `border-border` and so on), never raw hex values, so light and dark mode both work. Every text and background pair meets WCAG AA contrast (4.5:1 or better).
+
+## Type
+
+- **Latin:** Instrument Sans, self-hosted.
+- **Ge'ez (Amharic, Tigrinya):** Noto Sans Ethiopic, self-hosted. Browsers only download it when a page shows Ethiopic text.
+- **Studio font:** the studio site uses Loos Normal, a commercial typeface. It is not in the app because using a font inside a web product usually needs a separate web/app licence. If Thirty Degres holds one, it can replace Instrument Sans in one line.
+- Use Tailwind's size scale: `text-4xl` display, `text-2xl` heading, `text-lg` subheading, `text-base` body, `text-sm` small.
+
+## Ge'ez rules
+
+1. Mark Ethiopic text with `lang="am"` (or `lang="ti"`), or use the `font-ethiopic` class. It then gets the Ethiopic font and a line height of 1.8, because Ge'ez is taller and denser than Latin.
+2. Don't apply uppercase, small caps or letter-spacing to Ethiopic. The script has no case and tracking breaks its rhythm. The rule above resets both.
+3. Prefer `font-medium` or `font-semibold` over `font-bold` for Ethiopic headings; heavy weights fill in the small counters.
+4. Leave room in layouts: Amharic labels are often shorter than English but taller. Buttons and table rows must not have a fixed height that clips them.
+5. Every screen change is checked with Amharic text before it ships (CLAUDE.md rule 7).

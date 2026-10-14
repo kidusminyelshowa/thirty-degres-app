@@ -18,6 +18,16 @@
         ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji',
         'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 
+    --font-ethiopic:
+        'Noto Sans Ethiopic Variable', 'Instrument Sans Variable',
+        ui-sans-serif, system-ui, sans-serif;
+    --leading-ethiopic: 1.8;
+
+    --color-ink: #022018;
+    --color-mist: #f6f9f7;
+    --color-brand-green: #01803b;
+    --color-lime: #d1f811;
+
     --radius-lg: var(--radius);
     --radius-md: calc(var(--radius) - 2px);
     --radius-sm: calc(var(--radius) - 4px);
@@ -67,74 +77,77 @@
 }
 
 :root {
-    --background: oklch(1 0 0);
-    --foreground: oklch(0.145 0 0);
-    --card: oklch(1 0 0);
-    --card-foreground: oklch(0.145 0 0);
-    --popover: oklch(1 0 0);
-    --popover-foreground: oklch(0.145 0 0);
-    --primary: oklch(0.205 0 0);
-    --primary-foreground: oklch(0.985 0 0);
-    --secondary: oklch(0.97 0 0);
-    --secondary-foreground: oklch(0.205 0 0);
-    --muted: oklch(0.97 0 0);
-    --muted-foreground: oklch(0.556 0 0);
-    --accent: oklch(0.97 0 0);
-    --accent-foreground: oklch(0.205 0 0);
-    --destructive: oklch(0.577 0.245 27.325);
-    --destructive-foreground: oklch(0.577 0.245 27.325);
-    --border: oklch(0.922 0 0);
-    --input: oklch(0.922 0 0);
-    --ring: oklch(0.87 0 0);
-    --chart-1: oklch(0.646 0.222 41.116);
-    --chart-2: oklch(0.6 0.118 184.704);
-    --chart-3: oklch(0.398 0.07 227.392);
-    --chart-4: oklch(0.828 0.189 84.429);
-    --chart-5: oklch(0.769 0.188 70.08);
+    /* Thirty Degres brand palette, taken from the studio identity.
+       Ink is the deep forest used for text, Mist the page background,
+       Green the brand accent and Lime the highlight for active states. */
+    --background: #f6f9f7;
+    --foreground: #022018;
+    --card: #ffffff;
+    --card-foreground: #022018;
+    --popover: #ffffff;
+    --popover-foreground: #022018;
+    --primary: #022018;
+    --primary-foreground: #f6f9f7;
+    --secondary: #ecf1ee;
+    --secondary-foreground: #022018;
+    --muted: #ecf1ee;
+    --muted-foreground: #5b6f69;
+    --accent: #d1f811;
+    --accent-foreground: #022018;
+    --destructive: #c4321c;
+    --destructive-foreground: #c4321c;
+    --border: #e3e8e5;
+    --input: #d5ddd9;
+    --ring: #01803b;
+    --chart-1: #01803b;
+    --chart-2: #022018;
+    --chart-3: #9fc60c;
+    --chart-4: #d18a0f;
+    --chart-5: #2a7f9e;
     --radius: 0.625rem;
-    --sidebar: oklch(0.985 0 0);
-    --sidebar-foreground: oklch(0.145 0 0);
-    --sidebar-primary: oklch(0.205 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.97 0 0);
-    --sidebar-accent-foreground: oklch(0.205 0 0);
-    --sidebar-border: oklch(0.922 0 0);
-    --sidebar-ring: oklch(0.87 0 0);
+    --sidebar: #eef3f0;
+    --sidebar-foreground: #022018;
+    --sidebar-primary: #022018;
+    --sidebar-primary-foreground: #f6f9f7;
+    --sidebar-accent: #d1f811;
+    --sidebar-accent-foreground: #022018;
+    --sidebar-border: #e3e8e5;
+    --sidebar-ring: #01803b;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
-    --foreground: oklch(0.985 0 0);
-    --card: oklch(0.145 0 0);
-    --card-foreground: oklch(0.985 0 0);
-    --popover: oklch(0.145 0 0);
-    --popover-foreground: oklch(0.985 0 0);
-    --primary: oklch(0.985 0 0);
-    --primary-foreground: oklch(0.205 0 0);
-    --secondary: oklch(0.269 0 0);
-    --secondary-foreground: oklch(0.985 0 0);
-    --muted: oklch(0.269 0 0);
-    --muted-foreground: oklch(0.708 0 0);
-    --accent: oklch(0.269 0 0);
-    --accent-foreground: oklch(0.985 0 0);
-    --destructive: oklch(0.396 0.141 25.723);
-    --destructive-foreground: oklch(0.637 0.237 25.331);
-    --border: oklch(0.269 0 0);
-    --input: oklch(0.269 0 0);
-    --ring: oklch(0.439 0 0);
-    --chart-1: oklch(0.488 0.243 264.376);
-    --chart-2: oklch(0.696 0.17 162.48);
-    --chart-3: oklch(0.769 0.188 70.08);
-    --chart-4: oklch(0.627 0.265 303.9);
-    --chart-5: oklch(0.645 0.246 16.439);
-    --sidebar: oklch(0.205 0 0);
-    --sidebar-foreground: oklch(0.985 0 0);
-    --sidebar-primary: oklch(0.985 0 0);
-    --sidebar-primary-foreground: oklch(0.985 0 0);
-    --sidebar-accent: oklch(0.269 0 0);
-    --sidebar-accent-foreground: oklch(0.985 0 0);
-    --sidebar-border: oklch(0.269 0 0);
-    --sidebar-ring: oklch(0.439 0 0);
+    --background: #01140f;
+    --foreground: #f6f9f7;
+    --card: #04201a;
+    --card-foreground: #f6f9f7;
+    --popover: #04201a;
+    --popover-foreground: #f6f9f7;
+    --primary: #d1f811;
+    --primary-foreground: #022018;
+    --secondary: #0b2a22;
+    --secondary-foreground: #f6f9f7;
+    --muted: #0b2a22;
+    --muted-foreground: #9fb1ab;
+    --accent: #0f3a2e;
+    --accent-foreground: #d1f811;
+    --destructive: #8f2414;
+    --destructive-foreground: #f2836f;
+    --border: #163a31;
+    --input: #1d463b;
+    --ring: #2fb36b;
+    --chart-1: #2fb36b;
+    --chart-2: #d1f811;
+    --chart-3: #9fb1ab;
+    --chart-4: #f0b54a;
+    --chart-5: #5fb6d6;
+    --sidebar: #031a14;
+    --sidebar-foreground: #f6f9f7;
+    --sidebar-primary: #d1f811;
+    --sidebar-primary-foreground: #022018;
+    --sidebar-accent: #0f3a2e;
+    --sidebar-accent-foreground: #d1f811;
+    --sidebar-border: #163a31;
+    --sidebar-ring: #2fb36b;
 }
 
 @layer base {
@@ -144,5 +157,18 @@
 
     body {
         @apply bg-background text-foreground;
+    }
+
+    /* Ge'ez (Amharic, Tigrinya) runs taller and denser than Latin at the same
+       size, so it gets the Ethiopic face first, more line height, and none of
+       the case or tracking tricks that only make sense for Latin. Mark any
+       Ethiopic text with lang="am" (or "ti"), or use the font-ethiopic class. */
+    :lang(am),
+    :lang(ti),
+    .font-ethiopic {
+        font-family: var(--font-ethiopic);
+        line-height: var(--leading-ethiopic);
+        letter-spacing: normal;
+        text-transform: none;
     }
 }
