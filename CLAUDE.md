@@ -1,6 +1,6 @@
 # Thirty Degres app
 
-A brand operating system for Ethiopian and East African companies: one place for a brand's assets, guidelines, templates and voice. The founder is not an engineer; Claude writes the code and the founder reviews preview links. Product context and decisions live in Linear (team `THI`).
+A brand operating system for Ethiopian and East African companies: one place for a brand's assets, guidelines, templates and voice. The founder is not an engineer; Claude writes the code and the founder reviews preview links. Product context and decisions live in Linear (team `THI`). Every change follows the loop in `docs/workflow.md`.
 
 ## Stack
 
