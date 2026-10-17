@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Workspaces;
 use App\Enums\WorkspaceRole;
 use App\Http\Controllers\Controller;
 use App\Models\ActivityLog;
+use App\Models\Brand;
 use App\Models\Invitation;
 use App\Models\Membership;
 use App\Models\User;
@@ -49,7 +50,7 @@ class MemberController extends Controller
             ]);
 
         $invitations = $workspace->invitations()
-            ->with('inviter')
+            ->with(['inviter', 'brand'])
             ->whereNull('accepted_at')
             ->where('expires_at', '>', now())
             ->latest()
@@ -60,6 +61,8 @@ class MemberController extends Controller
                 'role' => $invitation->role->value,
                 'kind' => $invitation->kind->value,
                 'partnerOrganisation' => $invitation->partner_organisation,
+                'brandName' => $invitation->brand?->name,
+                'brandRole' => $invitation->brand_role?->value,
                 'expiresAt' => $invitation->expires_at->toDateString(),
                 'invitedBy' => $invitation->inviter?->name,
             ]);
@@ -71,6 +74,15 @@ class MemberController extends Controller
                 ? array_map(fn (WorkspaceRole $role) => $role->value, WorkspaceRole::cases())
                 : [WorkspaceRole::Admin->value, WorkspaceRole::Member->value],
             'defaultPartnerAccessEndsAt' => now()->addDays(90)->toDateString(),
+            'brands' => Brand::query()
+                ->with('parent')
+                ->get()
+                ->map(fn (Brand $brand) => [
+                    'id' => $brand->id,
+                    'name' => $brand->parent !== null ? "{$brand->parent->name} › {$brand->name}" : $brand->name,
+                ])
+                ->sortBy('name')
+                ->values(),
         ]);
     }
 

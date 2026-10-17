@@ -23,7 +23,7 @@ const sidebarNavItems: NavItem[] = [
         icon: null,
     },
     {
-        title: 'Appearance',
+        title: 'Appearance and language',
         href: editAppearance(),
         icon: null,
     },

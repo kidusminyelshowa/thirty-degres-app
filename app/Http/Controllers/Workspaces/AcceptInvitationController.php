@@ -40,6 +40,8 @@ class AcceptInvitationController extends Controller
                 'email' => $invitation->email,
                 'role' => $invitation->role->value,
                 'kind' => $invitation->kind->value,
+                'brandName' => $acceptInvitation->brandName($invitation),
+                'brandRole' => $invitation->brand_role?->value,
                 'invitedBy' => $invitation->inviter?->name,
                 'emailMatches' => $user instanceof User && $acceptInvitation->emailMatches($invitation, $user),
             ],

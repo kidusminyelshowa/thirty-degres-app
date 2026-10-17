@@ -33,4 +33,18 @@ return [
 
     'max_per_brand' => 8,
 
+    /*
+    |--------------------------------------------------------------------------
+    | Interface languages
+    |--------------------------------------------------------------------------
+    |
+    | Languages the app's own screens (menus, buttons, messages) come in. Each
+    | needs a lang/{code}.json file with every English text translated, which
+    | a test checks. English is the source text and needs no file. To add a
+    | language, add its code here and its file in lang/.
+    |
+    */
+
+    'interface' => ['en', 'am'],
+
 ];

@@ -3,6 +3,8 @@
 namespace App\Actions\Workspaces;
 
 use App\Models\ActivityLog;
+use App\Models\Brand;
+use App\Models\BrandRole;
 use App\Models\Invitation;
 use App\Models\Membership;
 use App\Models\User;
@@ -35,6 +37,22 @@ class AcceptInvitation
         return $invitation?->isPending() ? $invitation : null;
     }
 
+    /**
+     * The name of the brand a partner is invited onto, read from inside the
+     * invitation's workspace.
+     */
+    public function brandName(Invitation $invitation): ?string
+    {
+        if ($invitation->brand_id === null) {
+            return null;
+        }
+
+        return $this->tenancy->run(
+            $invitation->workspace,
+            fn () => Brand::query()->find($invitation->brand_id)?->name,
+        );
+    }
+
     public function emailMatches(Invitation $invitation, User $user): bool
     {
         return Str::lower($user->email) === Str::lower($invitation->email);
@@ -60,6 +78,13 @@ class AcceptInvitation
                     'access_ends_at' => $invitation->access_ends_at,
                 ],
             );
+
+            if ($invitation->brand_id !== null && $invitation->brand_role !== null) {
+                BrandRole::query()->firstOrCreate(
+                    ['brand_id' => $invitation->brand_id, 'membership_id' => $membership->id],
+                    ['role' => $invitation->brand_role],
+                );
+            }
 
             $invitation->forceFill(['accepted_at' => now()])->save();
 

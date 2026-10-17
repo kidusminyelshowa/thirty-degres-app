@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { Spinner } from '@/components/ui/spinner';
+import { brandRoleLabel } from '@/lib/assets';
 import { useTranslation } from '@/lib/i18n';
 import { kindLabel, roleDescription, roleLabel } from '@/lib/roles';
 import {
@@ -45,15 +46,22 @@ type PendingInvitation = {
     role: WorkspaceRole;
     kind: MembershipKind;
     partnerOrganisation: string | null;
+    brandName: string | null;
+    brandRole: GuestBrandRole | null;
     expiresAt: string;
     invitedBy: string | null;
 };
+
+type GuestBrandRole = 'editor' | 'viewer';
+
+type BrandOption = { id: string; name: string };
 
 type Props = {
     members: Member[];
     invitations: PendingInvitation[];
     assignableRoles: WorkspaceRole[];
     defaultPartnerAccessEndsAt: string;
+    brands: BrandOption[];
 };
 
 export default function Members({
@@ -61,6 +69,7 @@ export default function Members({
     invitations,
     assignableRoles,
     defaultPartnerAccessEndsAt,
+    brands,
 }: Props) {
     const { t } = useTranslation();
     const workspace = usePage().props.currentWorkspace!;
@@ -82,6 +91,7 @@ export default function Members({
                     slug={workspace.slug}
                     assignableRoles={assignableRoles}
                     defaultPartnerAccessEndsAt={defaultPartnerAccessEndsAt}
+                    brands={brands}
                 />
 
                 <section className="space-y-3">
@@ -118,6 +128,15 @@ export default function Members({
                                             {roleLabel(t, invitation.role)}
                                             {invitation.kind === 'partner' &&
                                                 ` · ${kindLabel(t, invitation.kind)}, ${invitation.partnerOrganisation}`}
+                                            {invitation.brandName &&
+                                                invitation.brandRole &&
+                                                ` · ${t(':role on :brand', {
+                                                    role: brandRoleLabel(
+                                                        t,
+                                                        invitation.brandRole,
+                                                    ),
+                                                    brand: invitation.brandName,
+                                                })}`}
                                             {' · '}
                                             {t('link works until :date', {
                                                 date: invitation.expiresAt,
@@ -155,10 +174,12 @@ function InviteForm({
     slug,
     assignableRoles,
     defaultPartnerAccessEndsAt,
+    brands,
 }: {
     slug: string;
     assignableRoles: WorkspaceRole[];
     defaultPartnerAccessEndsAt: string;
+    brands: BrandOption[];
 }) {
     const { t } = useTranslation();
     const [kind, setKind] = useState<MembershipKind>('staff');
@@ -289,6 +310,89 @@ function InviteForm({
                                         message={errors.access_ends_at}
                                     />
                                 </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="invite-brand">
+                                        {t('Brand they can see')}
+                                    </Label>
+                                    {brands.length > 0 ? (
+                                        <Select
+                                            name="brand_id"
+                                            defaultValue={brands[0].id}
+                                        >
+                                            <SelectTrigger id="invite-brand">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {brands.map((brand) => (
+                                                    <SelectItem
+                                                        key={brand.id}
+                                                        value={brand.id}
+                                                    >
+                                                        {brand.name}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    ) : (
+                                        <p className="py-2 text-sm text-muted-foreground">
+                                            {t(
+                                                'Create a brand first. Partners only ever see the brand they are invited to.',
+                                            )}
+                                        </p>
+                                    )}
+                                    <InputError message={errors.brand_id} />
+                                </div>
+                                <div className="grid gap-2">
+                                    <Label htmlFor="invite-brand-role">
+                                        {t('On that brand they can')}
+                                    </Label>
+                                    <Select
+                                        name="brand_role"
+                                        defaultValue="viewer"
+                                    >
+                                        <SelectTrigger id="invite-brand-role">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="viewer">
+                                                <span className="flex flex-col items-start">
+                                                    <span>
+                                                        {brandRoleLabel(
+                                                            t,
+                                                            'viewer',
+                                                        )}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {t(
+                                                            'See and download approved files and guidelines',
+                                                        )}
+                                                    </span>
+                                                </span>
+                                            </SelectItem>
+                                            <SelectItem value="editor">
+                                                <span className="flex flex-col items-start">
+                                                    <span>
+                                                        {brandRoleLabel(
+                                                            t,
+                                                            'editor',
+                                                        )}
+                                                    </span>
+                                                    <span className="text-xs text-muted-foreground">
+                                                        {t(
+                                                            'Also upload drafts and write guideline drafts',
+                                                        )}
+                                                    </span>
+                                                </span>
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                    <InputError message={errors.brand_role} />
+                                </div>
+                                <p className="text-sm text-muted-foreground sm:col-span-2">
+                                    {t(
+                                        'Partners see only this brand and its sub-brands, only approved files plus their own drafts, and never the people list or settings.',
+                                    )}
+                                </p>
                             </>
                         )}
 

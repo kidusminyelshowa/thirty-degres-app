@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\InterfaceLanguageController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -27,6 +28,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::inertia('settings/appearance', 'settings/appearance')->name('appearance.edit');
 });
+
+// Signed in or out: the sign-in page and shared links can be read in Amharic too.
+Route::put('language', [InterfaceLanguageController::class, 'update'])
+    ->middleware('throttle:30,1')
+    ->name('language.update');
 
 Route::get('.well-known/passkey-endpoints', function () {
     return response()->json([
