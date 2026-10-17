@@ -7,6 +7,8 @@ use App\Http\Controllers\Brands\BrandAccessController;
 use App\Http\Controllers\Brands\BrandController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Guidelines\GuidelinePageController;
+use App\Http\Controllers\Sharing\SharedLinkController;
+use App\Http\Controllers\Sharing\ShareLinkController;
 use App\Http\Controllers\Workspaces\AcceptInvitationController;
 use App\Http\Controllers\Workspaces\InvitationController;
 use App\Http\Controllers\Workspaces\MemberController;
@@ -47,7 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             Route::get('library', [LibraryController::class, 'index'])->name('library');
 
             Route::post('brands', [BrandController::class, 'store'])->name('brands.store');
-            Route::whereUuid(['brand', 'brandRole'])->group(function () {
+            Route::whereUuid(['brand', 'brandRole', 'shareLink'])->group(function () {
                 Route::get('brands/{brand}', [LibraryController::class, 'brand'])->name('brands.show');
                 Route::patch('brands/{brand}', [BrandController::class, 'update'])->name('brands.update');
                 Route::get('brands/{brand}/access', [BrandAccessController::class, 'index'])->name('brands.access.index');
@@ -57,6 +59,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::get('brands/{brand}/guidelines', [GuidelinePageController::class, 'brand'])->name('brands.guidelines.index');
                 Route::post('brands/{brand}/guidelines', [GuidelinePageController::class, 'store'])->name('brands.guidelines.store');
                 Route::put('brands/{brand}/guidelines/languages', [GuidelinePageController::class, 'languages'])->name('brands.guidelines.languages');
+                Route::get('brands/{brand}/share-links', [ShareLinkController::class, 'index'])->name('brands.share-links.index');
+                Route::post('brands/{brand}/share-links', [ShareLinkController::class, 'store'])->middleware('throttle:30,1')->name('brands.share-links.store');
+                Route::delete('brands/{brand}/share-links/{shareLink}', [ShareLinkController::class, 'destroy'])->name('brands.share-links.destroy');
             });
 
             Route::whereUuid('asset')->prefix('assets/{asset}')->name('assets.')->group(function () {
@@ -89,5 +94,22 @@ Route::get('invitations/{token}', [AcceptInvitationController::class, 'show'])
 Route::post('invitations/{token}', [AcceptInvitationController::class, 'store'])
     ->middleware(['auth', 'throttle:10,1'])
     ->name('invitations.accept');
+
+// Read-only share links, for people without an account (THI-38). Unknown,
+// expired and revoked links are all "not found".
+Route::prefix('s/{token}')
+    ->where(['token' => '[A-Za-z0-9]{40}'])
+    ->name('share.')
+    ->middleware('throttle:120,1')
+    ->group(function () {
+        Route::get('/', [SharedLinkController::class, 'show'])->name('show');
+        Route::post('unlock', [SharedLinkController::class, 'unlock'])->middleware('throttle:10,1')->name('unlock');
+        Route::get('pages/{page}', [SharedLinkController::class, 'page'])->whereUuid('page')->name('page');
+        Route::whereUuid('asset')->prefix('files/{asset}')->group(function () {
+            Route::get('preview', [SharedLinkController::class, 'preview'])->name('preview');
+            Route::get('download', [SharedLinkController::class, 'download'])->name('download');
+            Route::get('font', [SharedLinkController::class, 'font'])->name('font');
+        });
+    });
 
 require __DIR__.'/settings.php';

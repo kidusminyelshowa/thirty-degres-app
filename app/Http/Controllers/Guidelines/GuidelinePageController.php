@@ -13,6 +13,7 @@ use App\Models\ActivityLog;
 use App\Models\Asset;
 use App\Models\Brand;
 use App\Models\GuidelinePage;
+use App\Models\ShareLink;
 use App\Models\User;
 use App\Models\Workspace;
 use Illuminate\Http\RedirectResponse;
@@ -348,6 +349,7 @@ class GuidelinePageController extends Controller
             'delete' => Gate::allows('delete', $page),
             'create' => Gate::allows('create', [GuidelinePage::class, $page->brand]),
             'setLanguages' => Gate::allows('setGuidelineLanguages', $page->brand),
+            'share' => Gate::allows('create', [ShareLink::class, $page->brand]),
         ];
     }
 

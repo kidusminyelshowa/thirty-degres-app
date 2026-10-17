@@ -5,6 +5,7 @@ import { initializeTheme } from '@/hooks/use-appearance';
 import AppLayout from '@/layouts/app-layout';
 import AuthLayout from '@/layouts/auth-layout';
 import SettingsLayout from '@/layouts/settings/layout';
+import SharedLayout from '@/layouts/shared-layout';
 
 const appName = import.meta.env.VITE_APP_NAME || 'Thirty Degres';
 
@@ -16,6 +17,8 @@ void createInertiaApp({
             case name.startsWith('invitations/'):
             case name === 'workspaces/create':
                 return AuthLayout;
+            case name.startsWith('shared/'):
+                return SharedLayout;
             case name.startsWith('settings/'):
                 return [AppLayout, SettingsLayout];
             default:
