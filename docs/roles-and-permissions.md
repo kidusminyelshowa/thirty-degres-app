@@ -201,6 +201,13 @@ Tests and CI must run as the restricted app role, not the `postgres` superuser, 
 - A database trigger refuses `published_by = edited_by` unless the workspace has `allow_self_approval` on, the same rule as for files. Publishing also waits until every file on the page is approved, since Viewers could not see a draft file.
 - A page can only use files from its brand or the parent brand that the editor can see, and only font files as typefaces. Readers get only the files they may see.
 
+### What THI-38 built
+
+- Partners are invited straight onto one brand: the invitation carries `brand_id` and `brand_role` (Editor or Viewer only, also a database check), and accepting it creates the brand role. A partner sees that brand and its sub-brands and nothing else.
+- Tables `share_links` and `share_link_assets`, locked by row-level security. A link shares either a brand's published guidelines (every published page, and only the approved files those pages show) or a kit of chosen approved files. Opening one uses a fourth setting, `app.share_token_hash`: Postgres shows the one link whose hashed secret the request carries, then the request continues inside that link's workspace with no membership, so every policy says no and the share pages read only what the link allows (`App\Sharing`).
+- Links expire after 14 days by default and at most 90 (also a database check), can have a password, serve previews only unless originals are allowed (brand typefaces are original files, so shared guidelines show them only then), and can be turned off by whoever made them or a Brand manager. Archiving a file or taking a page down stops every link serving it.
+- Opens (once per visit) and downloads are logged in the activity log and counted on the brand's **Share** page. Rough location is not recorded yet: it needs an IP-to-country lookup, which would be a new service.
+
 ## Defaults picked here, easy to change
 
 These are product choices more than technical ones. Each is one setting.

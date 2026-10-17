@@ -260,7 +260,7 @@ function InviteForm({
                                                     <span>
                                                         {roleLabel(t, role)}
                                                     </span>
-                                                    <span className="text-xs text-muted-foreground">
+                                                    <span className="text-xs text-muted-foreground in-data-[slot=select-value]:hidden">
                                                         {roleDescription(
                                                             t,
                                                             role,
@@ -362,7 +362,7 @@ function InviteForm({
                                                             'viewer',
                                                         )}
                                                     </span>
-                                                    <span className="text-xs text-muted-foreground">
+                                                    <span className="text-xs text-muted-foreground in-data-[slot=select-value]:hidden">
                                                         {t(
                                                             'See and download approved files and guidelines',
                                                         )}
@@ -377,7 +377,7 @@ function InviteForm({
                                                             'editor',
                                                         )}
                                                     </span>
-                                                    <span className="text-xs text-muted-foreground">
+                                                    <span className="text-xs text-muted-foreground in-data-[slot=select-value]:hidden">
                                                         {t(
                                                             'Also upload drafts and write guideline drafts',
                                                         )}
