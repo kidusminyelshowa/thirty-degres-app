@@ -45,13 +45,11 @@ class AppServiceProvider extends ServiceProvider
             app()->isProduction(),
         );
 
+        // Length and a check against known leaked passwords, but no
+        // must-have symbols or capitals: those rules turn away the strong
+        // passwords that browsers and password managers suggest.
         Password::defaults(fn (): ?Password => app()->isProduction()
-            ? Password::min(12)
-                ->mixedCase()
-                ->letters()
-                ->numbers()
-                ->symbols()
-                ->uncompromised()
+            ? Password::min(12)->uncompromised()
             : null,
         );
     }

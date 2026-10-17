@@ -46,7 +46,9 @@ class AssetController extends Controller
             'kind' => ['nullable', Rule::enum(AssetKind::class)],
             ...$this->tagRules(),
         ], [
-            'file.extensions' => __('This type of file cannot be added to the library.'),
+            'file.extensions' => __('This type of file can’t go in the library. It accepts :types.', [
+                'types' => strtoupper(implode(', ', config('assets.extensions'))),
+            ]),
         ]);
 
         /** @var User $user */

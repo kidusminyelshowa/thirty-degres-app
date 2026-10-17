@@ -161,7 +161,8 @@ class MemberRolesTest extends TestCase
 
         $this->actingAs($admin->user)
             ->patch(route('workspaces.members.update', [$this->workspace, $admin]), ['role' => 'owner'])
-            ->assertForbidden();
+            ->assertForbidden()
+            ->assertSee('Ask another Owner or Admin.');
 
         $this->actingAs($this->owner->user)
             ->patch(route('workspaces.members.update', [$this->workspace, $this->owner]), ['role' => 'member'])

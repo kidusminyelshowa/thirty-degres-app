@@ -21,15 +21,15 @@ class MembershipPolicy
         $actor = $this->actor($user, $target->workspace_id);
 
         if ($actor === null || ! $actor->managesWorkspace()) {
-            return Response::deny(__('Only Owners and Admins can change roles.'));
+            return Response::deny(__('Only Owners and Admins can change roles. Ask one of them to do it.'));
         }
 
         if ($actor->is($target)) {
-            return Response::deny(__('Nobody can change their own role.'));
+            return Response::deny(__('You can’t change your own role. Ask another Owner or Admin.'));
         }
 
         if ($actor->role !== WorkspaceRole::Owner && ($target->role === WorkspaceRole::Owner || $newRole === WorkspaceRole::Owner)) {
-            return Response::deny(__('Only an Owner can make or change an Owner.'));
+            return Response::deny(__('Only an Owner can make or change an Owner. Ask an Owner to do it.'));
         }
 
         if ($target->isPartner() && $newRole !== WorkspaceRole::Member) {
@@ -48,15 +48,15 @@ class MembershipPolicy
         $actor = $this->actor($user, $target->workspace_id);
 
         if ($actor === null || ! $actor->managesWorkspace()) {
-            return Response::deny(__('Only Owners and Admins can remove people.'));
+            return Response::deny(__('Only Owners and Admins can remove people. Ask one of them to do it.'));
         }
 
         if ($actor->is($target)) {
-            return Response::deny(__('You cannot remove yourself.'));
+            return Response::deny(__('You can’t remove yourself. Ask an Owner or Admin to do it.'));
         }
 
         if ($target->role === WorkspaceRole::Owner && $actor->role !== WorkspaceRole::Owner) {
-            return Response::deny(__('Only an Owner can remove an Owner.'));
+            return Response::deny(__('Only an Owner can remove an Owner. Ask an Owner to do it.'));
         }
 
         if ($target->role === WorkspaceRole::Owner && $this->isLastOwner($target)) {

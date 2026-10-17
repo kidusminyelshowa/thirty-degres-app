@@ -4,17 +4,19 @@ import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
 import { logout } from '@/routes';
+import { useTranslation } from '@/lib/i18n';
 import { send } from '@/routes/verification';
 
 export default function VerifyEmail({ status }: { status?: string }) {
+    const { t } = useTranslation();
+
     return (
         <>
-            <Head title="Email verification" />
+            <Head title={t('Check your email')} />
 
             {status === 'verification-link-sent' && (
                 <div className="mb-4 text-center text-sm font-medium text-green-600">
-                    A new verification link has been sent to the email address
-                    you provided during registration.
+                    {t('We sent a new link. It can take a minute to arrive.')}
                 </div>
             )}
 
@@ -23,14 +25,14 @@ export default function VerifyEmail({ status }: { status?: string }) {
                     <>
                         <Button disabled={processing} variant="secondary">
                             {processing && <Spinner />}
-                            Resend verification email
+                            {t('Send the link again')}
                         </Button>
 
                         <TextLink
                             href={logout()}
                             className="mx-auto block text-sm"
                         >
-                            Log out
+                            {t('Log out')}
                         </TextLink>
                     </>
                 )}
@@ -40,7 +42,7 @@ export default function VerifyEmail({ status }: { status?: string }) {
 }
 
 VerifyEmail.layout = {
-    title: 'Email verification',
+    title: 'Check your email',
     description:
-        'Please verify your email address by clicking on the link we just emailed to you.',
+        'We sent you a link. Open it to confirm your address and get started.',
 };

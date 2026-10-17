@@ -73,7 +73,10 @@ export function UploadDialog({
             let error: string | undefined;
 
             if (!extensions.includes(extension)) {
-                error = t('This type of file cannot be added to the library.');
+                error = t(
+                    'This type of file can’t go in the library. It accepts :types.',
+                    { types: extensions.join(', ').toUpperCase() },
+                );
             } else if (file.size > maxMegabytes * 1024 * 1024) {
                 error = t('Larger than :size MB.', { size: maxMegabytes });
             }

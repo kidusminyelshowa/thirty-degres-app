@@ -133,7 +133,7 @@ class BrandAccessController extends Controller
         $brandRole->loadMissing('membership');
 
         if ($brandRole->membership->user_id === $user->id) {
-            abort(403, __('Nobody can change their own role.'));
+            abort(403, __('You can’t change your own role. Ask another Owner or Admin.'));
         }
 
         DB::transaction(function () use ($brandRole, $brand) {
@@ -158,7 +158,7 @@ class BrandAccessController extends Controller
     private function guard(Request $request, Membership $membership, BrandRoleName $role): void
     {
         if ($membership->user_id === $request->user()?->getAuthIdentifier()) {
-            abort(403, __('Nobody can change their own role.'));
+            abort(403, __('You can’t change your own role. Ask another Owner or Admin.'));
         }
 
         if ($membership->isPartner() && $role === BrandRoleName::Manager) {

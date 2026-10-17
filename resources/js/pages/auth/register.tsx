@@ -187,5 +187,5 @@ export default function Register({ passwordRules, invitation }: Props) {
 
 Register.layout = {
     title: 'Create an account',
-    description: 'Enter your details below to create your account',
+    description: 'Set up one place for your company’s brands.',
 };

@@ -13,7 +13,9 @@ use App\Http\Controllers\Workspaces\WorkspaceController;
 use App\Http\Controllers\Workspaces\WorkspaceSettingsController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+// No public home page until the thirtydegres.xyz website ships (THI-45):
+// signed-in people go to their workspace, everyone else to sign in.
+Route::get('/', fn () => auth()->check() ? to_route('dashboard') : to_route('login'))->name('home');
 
 // Internal reference for reviewing colours, type and components on preview links.
 Route::inertia('design-system', 'design-system')->name('design-system');
