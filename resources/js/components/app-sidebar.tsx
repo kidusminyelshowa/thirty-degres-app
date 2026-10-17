@@ -1,5 +1,5 @@
 import { Link, usePage } from '@inertiajs/react';
-import { Home, Library, Users } from 'lucide-react';
+import { BookOpen, Home, Library, Users } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { NavMain } from '@/components/nav-main';
 import { NavUser } from '@/components/nav-user';
@@ -16,6 +16,7 @@ import { WorkspaceSwitcher } from '@/components/workspace-switcher';
 import { useTranslation } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 import { library, show } from '@/routes/workspaces';
+import { index as guidelines } from '@/routes/workspaces/guidelines';
 import { index as members } from '@/routes/workspaces/members';
 import type { NavItem } from '@/types';
 
@@ -34,6 +35,11 @@ export function AppSidebar() {
                   title: t('Library'),
                   href: library(currentWorkspace.slug),
                   icon: Library,
+              },
+              {
+                  title: t('Guidelines'),
+                  href: guidelines(currentWorkspace.slug),
+                  icon: BookOpen,
               },
               ...(currentWorkspace.canManageMembers
                   ? [

@@ -1,5 +1,6 @@
 import { Form, Head, Link, router, usePage } from '@inertiajs/react';
 import {
+    BookOpen,
     ChevronLeft,
     ChevronRight,
     Pencil,
@@ -45,6 +46,7 @@ import {
     update as updateBrand,
 } from '@/routes/workspaces/brands';
 import { index as brandAccess } from '@/routes/workspaces/brands/access';
+import { index as brandGuidelines } from '@/routes/workspaces/brands/guidelines';
 import type {
     AssetKind,
     AssetStatus,
@@ -179,6 +181,17 @@ export default function Library({
                     </div>
                     {brand && (
                         <div className="flex flex-wrap gap-2">
+                            <Button variant="outline" asChild>
+                                <Link
+                                    href={brandGuidelines([
+                                        workspace.slug,
+                                        brand.id,
+                                    ])}
+                                >
+                                    <BookOpen />
+                                    {t('Guidelines')}
+                                </Link>
+                            </Button>
                             {brand.canRename && (
                                 <RenameBrandDialog brand={brand} />
                             )}

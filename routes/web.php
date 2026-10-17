@@ -6,6 +6,7 @@ use App\Http\Controllers\Assets\LibraryController;
 use App\Http\Controllers\Brands\BrandAccessController;
 use App\Http\Controllers\Brands\BrandController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Guidelines\GuidelinePageController;
 use App\Http\Controllers\Workspaces\AcceptInvitationController;
 use App\Http\Controllers\Workspaces\InvitationController;
 use App\Http\Controllers\Workspaces\MemberController;
@@ -53,6 +54,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::post('brands/{brand}/access', [BrandAccessController::class, 'store'])->name('brands.access.store');
                 Route::delete('brands/{brand}/access/{brandRole}', [BrandAccessController::class, 'destroy'])->name('brands.access.destroy');
                 Route::post('brands/{brand}/assets', [AssetController::class, 'store'])->middleware('throttle:120,1')->name('brands.assets.store');
+                Route::get('brands/{brand}/guidelines', [GuidelinePageController::class, 'brand'])->name('brands.guidelines.index');
+                Route::post('brands/{brand}/guidelines', [GuidelinePageController::class, 'store'])->name('brands.guidelines.store');
+                Route::put('brands/{brand}/guidelines/languages', [GuidelinePageController::class, 'languages'])->name('brands.guidelines.languages');
             });
 
             Route::whereUuid('asset')->prefix('assets/{asset}')->name('assets.')->group(function () {
@@ -61,9 +65,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
                 Route::delete('/', [AssetController::class, 'destroy'])->name('destroy');
                 Route::get('download', [AssetController::class, 'download'])->middleware('throttle:120,1')->name('download');
                 Route::get('preview', [AssetController::class, 'preview'])->name('preview');
+                Route::get('font', [AssetController::class, 'font'])->name('font');
                 Route::post('approve', [AssetStatusController::class, 'approve'])->name('approve');
                 Route::post('archive', [AssetStatusController::class, 'archive'])->name('archive');
                 Route::post('restore', [AssetStatusController::class, 'restore'])->name('restore');
+            });
+
+            Route::get('guidelines', [GuidelinePageController::class, 'index'])->name('guidelines.index');
+            Route::whereUuid('page')->prefix('guidelines/{page}')->name('guidelines.')->group(function () {
+                Route::get('/', [GuidelinePageController::class, 'show'])->name('show');
+                Route::get('edit', [GuidelinePageController::class, 'edit'])->name('edit');
+                Route::put('/', [GuidelinePageController::class, 'update'])->name('update');
+                Route::delete('/', [GuidelinePageController::class, 'destroy'])->name('destroy');
+                Route::post('publish', [GuidelinePageController::class, 'publish'])->name('publish');
+                Route::post('move', [GuidelinePageController::class, 'move'])->name('move');
             });
         });
 });
