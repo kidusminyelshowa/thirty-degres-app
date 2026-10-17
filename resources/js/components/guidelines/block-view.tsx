@@ -1,4 +1,4 @@
-import { Check, Copy, ImageOff, X } from 'lucide-react';
+import { Check, Copy, Download, ImageOff, X } from 'lucide-react';
 import { createContext, useContext, useState } from 'react';
 import type { ElementType, ReactNode } from 'react';
 import {
@@ -13,6 +13,7 @@ import {
     textOn,
     written,
 } from '@/lib/guidelines';
+import { Button } from '@/components/ui/button';
 import { useTranslation } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import type {
@@ -206,6 +207,31 @@ function AssetImage({
     );
 }
 
+/**
+ * The original file, through the library's download route, so people use
+ * the real font or logo instead of a lookalike.
+ */
+function DownloadLink({ asset }: { asset: GuidelineAsset | undefined }) {
+    const { t } = useTranslation();
+
+    if (!asset) {
+        return null;
+    }
+
+    return (
+        <Button variant="outline" size="sm" asChild className="shrink-0">
+            <a
+                href={asset.downloadUrl}
+                download
+                aria-label={t('Download :name', { name: asset.name })}
+            >
+                <Download aria-hidden />
+                {t('Download')}
+            </a>
+        </Button>
+    );
+}
+
 function LogosView({ block, assets }: { block: LogosBlock; assets: Assets }) {
     return (
         <div className="grid gap-4 sm:grid-cols-2">
@@ -232,8 +258,13 @@ function LogosView({ block, assets }: { block: LogosBlock; assets: Assets }) {
                             )}
                         />
                     </div>
-                    <figcaption className="flex flex-col gap-0.5 text-sm text-muted-foreground">
+                    <figcaption className="flex items-start justify-between gap-2 text-sm text-muted-foreground">
                         <Local text={item.caption} as="span" />
+                        <DownloadLink
+                            asset={
+                                item.assetId ? assets[item.assetId] : undefined
+                            }
+                        />
                     </figcaption>
                 </figure>
             ))}
@@ -386,6 +417,14 @@ function TypePairingView({
                             >
                                 {face.sample}
                             </p>
+                        )}
+                        {face.assetId && assets[face.assetId] && (
+                            <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-sm text-muted-foreground">
+                                <span>
+                                    {t('Install this font before you design.')}
+                                </span>
+                                <DownloadLink asset={assets[face.assetId]} />
+                            </div>
                         )}
                     </div>
                 ))}

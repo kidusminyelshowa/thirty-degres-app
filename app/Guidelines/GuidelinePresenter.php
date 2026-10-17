@@ -91,6 +91,7 @@ class GuidelinePresenter
             'fontUrl' => in_array($asset->extension, self::FONT_EXTENSIONS, true)
                 ? route('workspaces.assets.font', [$workspace, $asset, 'v' => $asset->updated_at?->getTimestamp()])
                 : null,
+            'downloadUrl' => route('workspaces.assets.download', [$workspace, $asset]),
         ];
     }
 

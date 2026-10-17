@@ -88,6 +88,7 @@ export type GuidelineAsset = {
     extension: string;
     previewUrl: string | null;
     fontUrl: string | null;
+    downloadUrl: string;
 };
 
 export type GuidelinePageSummary = {

@@ -191,6 +191,38 @@ class GuidelinePageTest extends TestCase
             ->assertNotFound();
     }
 
+    public function test_viewers_download_the_brand_typeface_from_a_published_page_and_other_companies_cannot()
+    {
+        $font = $this->uploadAsset($this->brand, file: UploadedFile::fake()->create('YirgaSans.woff2', 40, 'font/woff2'), status: AssetStatus::Approved);
+        $page = $this->createGuidelinePage($this->brand, author: $this->editor->user, publisher: $this->manager->user, blocks: [[
+            'id' => 'type',
+            'type' => 'type_pairing',
+            'faces' => [['script' => 'ethiopic', 'family' => 'Yirga Sans', 'assetId' => $font->id, 'weight' => 500, 'sample' => 'ቡና']],
+            'scale' => [],
+            'note' => [],
+        ]]);
+        $download = route('workspaces.assets.download', [$this->workspace, $font]);
+
+        $this->actingAs($this->viewer->user)
+            ->get(route('workspaces.guidelines.show', [$this->workspace, $page]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $inertia) => $inertia->where("assets.{$font->id}.downloadUrl", $download));
+
+        $this->actingAs($this->viewer->user)
+            ->get($download)
+            ->assertOk()
+            ->assertDownload('YirgaSans.woff2');
+
+        $other = $this->createWorkspace('Another Company');
+        $this->createBrand($other, 'Another Brand');
+
+        foreach ([$other, $this->workspace] as $workspace) {
+            $this->actingAs($this->ownerOf($other))
+                ->get(route('workspaces.assets.download', [$workspace, $font]))
+                ->assertNotFound();
+        }
+    }
+
     public function test_a_brand_manager_publishes_someone_elses_page_and_viewers_see_that_version()
     {
         $page = $this->createGuidelinePage($this->brand, author: $this->editor->user, title: 'Logo');
