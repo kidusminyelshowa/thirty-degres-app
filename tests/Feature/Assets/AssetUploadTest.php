@@ -141,6 +141,17 @@ class AssetUploadTest extends TestCase
         $this->inWorkspace($this->workspace, fn () => $this->assertSame(0, Asset::count()));
     }
 
+    public function test_a_refused_file_says_which_types_are_accepted()
+    {
+        $this->actingAs($this->editor->user)
+            ->post(route('workspaces.brands.assets.store', [$this->workspace, $this->brand]), [
+                'file' => UploadedFile::fake()->create('setup.exe', 10),
+            ])
+            ->assertSessionHasErrors([
+                'file' => 'This type of file can’t go in the library. It accepts '.strtoupper(implode(', ', config('assets.extensions'))).'.',
+            ]);
+    }
+
     public function test_files_over_the_limit_are_refused()
     {
         config(['assets.max_upload_megabytes' => 1]);

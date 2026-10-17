@@ -18,11 +18,11 @@ class InvitationPolicy
         $actor = $this->actor($user);
 
         if ($actor === null || ! $actor->managesWorkspace()) {
-            return Response::deny(__('Only Owners and Admins can invite people.'));
+            return Response::deny(__('Only Owners and Admins can invite people. Ask one of them to send the invitation.'));
         }
 
         if ($role === WorkspaceRole::Owner && $actor->role !== WorkspaceRole::Owner) {
-            return Response::deny(__('Only an Owner can make or change an Owner.'));
+            return Response::deny(__('Only an Owner can make or change an Owner. Ask an Owner to do it.'));
         }
 
         if ($kind === MembershipKind::Partner && $role !== WorkspaceRole::Member) {

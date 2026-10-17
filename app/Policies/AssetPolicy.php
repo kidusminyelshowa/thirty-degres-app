@@ -71,7 +71,7 @@ class AssetPolicy
         [$actor, $role] = $this->actorAndRole($user, $asset);
 
         if ($actor === null || $role !== BrandRoleName::Manager || $actor->isPartner()) {
-            return Response::deny(__('Only a Brand manager can approve files.'));
+            return Response::deny(__('Only a Brand manager can approve files. Ask a Brand manager on this brand.'));
         }
 
         if (! $asset->isDraft()) {
@@ -79,7 +79,7 @@ class AssetPolicy
         }
 
         if ($this->uploadedBy($asset, $actor) && ! $this->allowsSelfApproval()) {
-            return Response::deny(__('Someone else must approve your upload.'));
+            return Response::deny(__('Someone else needs to approve your upload. Ask a Brand manager on this brand.'));
         }
 
         return Response::allow();

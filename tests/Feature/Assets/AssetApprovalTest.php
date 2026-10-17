@@ -75,7 +75,7 @@ class AssetApprovalTest extends TestCase
             ->assertInertia(fn (Assert $page) => $page
                 ->component('assets/show')
                 ->where('can.approve', false)
-                ->where('can.approveReason', 'Someone else must approve your upload.'));
+                ->where('can.approveReason', 'Someone else needs to approve your upload. Ask a Brand manager on this brand.'));
 
         $this->actingAs($this->manager->user)
             ->post(route('workspaces.assets.approve', [$this->workspace, $asset]))
