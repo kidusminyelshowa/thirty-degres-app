@@ -29,10 +29,14 @@ class WorkspaceInvitation extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject(__('Join :workspace on Thirty Degres', ['workspace' => $this->workspaceName]))
-            ->line(__(':inviter invited you to the :workspace workspace on Thirty Degres.', [
+            ->subject(__('Join :workspace on :app', [
+                'workspace' => $this->workspaceName,
+                'app' => config()->string('app.name'),
+            ]))
+            ->line(__(':inviter invited you to the :workspace workspace on :app.', [
                 'inviter' => $this->inviterName,
                 'workspace' => $this->workspaceName,
+                'app' => config()->string('app.name'),
             ]))
             ->action(__('Accept invitation'), route('invitations.show', $this->token))
             ->line(__('This link works until :date. If you were not expecting it, you can ignore this email.', [
