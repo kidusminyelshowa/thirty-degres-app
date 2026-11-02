@@ -8,7 +8,7 @@ One Laravel application serves the React screens through Inertia, so there is no
 
 | Part            | Choice                                                                     | Why                                                                                                                         |
 | --------------- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------- |
-| Server          | Laravel 13, PHP 8.3                                                        | Mirrors Frontify's PHP-server pattern; login, queues, storage and permission policies are built in; large local hiring pool |
+| Server          | Laravel 13, PHP 8.5                                                        | Mirrors Frontify's PHP-server pattern; login, queues, storage and permission policies are built in; large local hiring pool |
 | Screens         | React 19, TypeScript, Inertia, Tailwind, shadcn/ui                         | Modern UI with typed code that catches AI mistakes early                                                                    |
 | Login           | Fortify: email verification, two-factor, passkeys                          | Enterprise clients expect strong sign-in from day one                                                                       |
 | Database        | Postgres                                                                   | Row-level security for tenant isolation; runs the same in Laravel Cloud and in an Ethiopian data centre                     |
