@@ -6,7 +6,7 @@ Built with Laravel 13, React 19 and Postgres. See [docs/architecture.md](docs/ar
 
 ## Run it locally
 
-You need PHP 8.3, Composer, Node 22 and Postgres 16.
+You need PHP 8.5, Composer, Node 22 and Postgres 16.
 
 ```bash
 createdb thirty_degres && createdb thirty_degres_test
