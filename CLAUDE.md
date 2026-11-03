@@ -2,7 +2,7 @@
 
 A brand operating system for Ethiopian and East African companies: one place for a brand's assets, guidelines, templates and voice. The founder is not an engineer; Claude writes the code and the founder reviews preview links. Product context and decisions live in Linear (team `THI`). Every change follows the loop in `docs/workflow.md`.
 
-The product is called **Aluma** (from Amharic አሉ, "they said", and ማ, "who"; domain alumahq.com). Thirty Degres stays the project, repository and studio name. User-facing text takes the product name from `config('app.name')` (the `name` Inertia prop on the frontend) rather than hard-coding it.
+The product is called **witti** (always lowercase; domain witti.one). Thirty Degres stays the project, repository and studio name. User-facing text takes the product name from `config('app.name')` (the `name` Inertia prop on the frontend) rather than hard-coding it.
 
 ## Stack
 

@@ -77,13 +77,13 @@ export default function DesignSystem() {
                 <header className="space-y-2">
                     <Badge variant="secondary">Internal reference</Badge>
                     <h1 className="text-4xl font-semibold">
-                        Aluma design system
+                        witti design system
                     </h1>
                     <p
                         lang="am"
                         className="text-2xl font-semibold text-brand-green dark:text-lime"
                     >
-                        አሉማ
+                        ዊቲ
                     </p>
                 </header>
 
