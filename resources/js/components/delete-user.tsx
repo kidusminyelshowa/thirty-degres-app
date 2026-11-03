@@ -1,4 +1,4 @@
-import { Form } from '@inertiajs/react';
+import { Form, usePage } from '@inertiajs/react';
 import { useRef } from 'react';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import Heading from '@/components/heading';
@@ -20,6 +20,7 @@ import { useTranslation } from '@/lib/i18n';
 export default function DeleteUser() {
     const passwordInput = useRef<HTMLInputElement>(null);
     const { t } = useTranslation();
+    const { name } = usePage().props;
 
     return (
         <div className="space-y-6">
@@ -27,7 +28,8 @@ export default function DeleteUser() {
                 variant="small"
                 title={t('Delete your account')}
                 description={t(
-                    'Removes you and your sign-in details from Thirty Degres.',
+                    'Removes you and your sign-in details from :app.',
+                    { app: name },
                 )}
             />
             <div className="space-y-4 rounded-lg border border-red-100 bg-red-50 p-4 dark:border-red-200/10 dark:bg-red-700/10">

@@ -1,4 +1,4 @@
-import { Form, Head } from '@inertiajs/react';
+import { Form, Head, usePage } from '@inertiajs/react';
 import InputError from '@/components/input-error';
 import PasswordInput from '@/components/password-input';
 import TextLink from '@/components/text-link';
@@ -18,6 +18,7 @@ type Props = {
 
 export default function Register({ passwordRules, invitation }: Props) {
     const { t } = useTranslation();
+    const { name } = usePage().props;
 
     return (
         <>
@@ -152,7 +153,8 @@ export default function Register({ passwordRules, invitation }: Props) {
                                         className="leading-normal font-normal"
                                     >
                                         {t(
-                                            'I agree that Thirty Degres stores my account and my company’s files on servers in Frankfurt, Germany, which is outside Ethiopia.',
+                                            'I agree that :app stores my account and my company’s files on servers in Frankfurt, Germany, which is outside Ethiopia.',
+                                            { app: name },
                                         )}
                                     </Label>
                                 </div>
