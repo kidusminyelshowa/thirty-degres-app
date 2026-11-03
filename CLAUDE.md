@@ -6,7 +6,7 @@ The product is called **Aluma** (from Amharic አሉ, "they said", and ማ, "who
 
 ## Stack
 
-- Laravel 13 (PHP 8.3) with Fortify for login, two-factor and passkeys
+- Laravel 13 (PHP 8.5, the version Laravel Cloud runs) with Fortify for login, two-factor and passkeys
 - React 19 + TypeScript through Inertia 3; Tailwind 4 and shadcn/ui components in `resources/js/components/ui`
 - Wayfinder generates typed route helpers into `resources/js/actions` and `resources/js/routes` (gitignored; regenerate with `php artisan wayfinder:generate --with-form`)
 - Postgres everywhere: local, CI and production. Never add SQLite-only or MySQL-only SQL
