@@ -2,7 +2,7 @@
 
 A brand operating system for Ethiopian and East African companies: one place for a brand's assets, guidelines, templates and voice. The founder is not an engineer; Claude writes the code and the founder reviews preview links. Product context and decisions live in Linear (team `THI`). Every change follows the loop in `docs/workflow.md`.
 
-The product and project are called **witti** (always lowercase; domain witti.one). It was called Thirty Degres until November 2026, which is why the GitHub repository, the email sender (thirtydegres.xyz) and the `thirty_app` database role still carry that name. User-facing text takes the product name from `config('app.name')` (the `name` Inertia prop on the frontend) rather than hard-coding it.
+The product and project are called **witti** (always lowercase; domain witti.one). It was called Thirty Degres until November 2026, which is why the GitHub repository and the `thirty_app` database role still carry that name. Email is sent from hello@witti.one. User-facing text takes the product name from `config('app.name')` (the `name` Inertia prop on the frontend) rather than hard-coding it.
 
 ## Stack
 
