@@ -14,7 +14,7 @@ use App\Http\Controllers\Workspaces\WorkspaceController;
 use App\Http\Controllers\Workspaces\WorkspaceSettingsController;
 use Illuminate\Support\Facades\Route;
 
-// No public home page until the thirtydegres.xyz website ships (THI-45):
+// No public home page until the witti.one website ships (THI-45):
 // signed-in people go to their workspace, everyone else to sign in.
 Route::get('/', fn () => auth()->check() ? to_route('dashboard') : to_route('login'))->name('home');
 

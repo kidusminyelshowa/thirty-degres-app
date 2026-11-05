@@ -19,7 +19,7 @@ jobs:
         env:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: thirty_degres
+          POSTGRES_DB: witti
         ports:
           - 5432:5432
         options: >-
@@ -30,7 +30,7 @@ jobs:
 
     steps:
       - name: Create test database
-        run: PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE thirty_degres_test;'
+        run: PGPASSWORD=postgres psql -h 127.0.0.1 -U postgres -c 'CREATE DATABASE witti_test;'
 
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1

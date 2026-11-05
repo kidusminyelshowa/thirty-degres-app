@@ -1,6 +1,6 @@
 # Roles and permissions
 
-Decided 14 October 2026 (Linear THI-11). This note sets who can see and do what in Thirty Degres, and how we stop one company ever seeing another company's files. Build week 1 (THI-35) builds the first part of it.
+Decided 14 October 2026 (Linear THI-11). This note sets who can see and do what in witti, and how we stop one company ever seeing another company's files. Build week 1 (THI-35) builds the first part of it.
 
 ## In short
 

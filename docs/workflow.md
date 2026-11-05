@@ -1,6 +1,6 @@
 # How we build
 
-Decided 14 October 2026 (Linear THI-10). Thirty Degres is built by Claude, with Kidus deciding what gets built and approving every change before it goes live. This note is the loop every feature follows, so any Claude session (or a future engineer) works the same way.
+Decided 14 October 2026 (Linear THI-10). witti is built by Claude, with Kidus deciding what gets built and approving every change before it goes live. This note is the loop every feature follows, so any Claude session (or a future engineer) works the same way.
 
 ## The loop
 
@@ -35,7 +35,7 @@ In GitHub, **Settings > Rules > Rulesets > New branch ruleset** for `main`: requ
 
 ## Feature issue template
 
-Kidus adds this once in Linear under **Settings > Teams > Thirty Degres > Templates > New template**, named "Feature". Every feature issue starts from it.
+Kidus adds this once in Linear under **Settings > Teams > witti > Templates > New template**, named "Feature". Every feature issue starts from it.
 
 ```markdown
 ## Problem

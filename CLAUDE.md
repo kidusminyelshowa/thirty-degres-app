@@ -1,8 +1,8 @@
-# Thirty Degres app
+# witti
 
 A brand operating system for Ethiopian and East African companies: one place for a brand's assets, guidelines, templates and voice. The founder is not an engineer; Claude writes the code and the founder reviews preview links. Product context and decisions live in Linear (team `THI`). Every change follows the loop in `docs/workflow.md`.
 
-The product is called **witti** (always lowercase; domain witti.one). Thirty Degres stays the project, repository and studio name. User-facing text takes the product name from `config('app.name')` (the `name` Inertia prop on the frontend) rather than hard-coding it.
+The product and project are called **witti** (always lowercase; domain witti.one). It was called Thirty Degres until November 2026, which is why the GitHub repository, the email sender (thirtydegres.xyz) and the `thirty_app` database role still carry that name. User-facing text takes the product name from `config('app.name')` (the `name` Inertia prop on the frontend) rather than hard-coding it.
 
 ## Stack
 
@@ -19,7 +19,7 @@ The product is called **witti** (always lowercase; domain witti.one). Thirty Deg
 - `composer ci:check` is what CI runs: frontend lint/format, `tsc`, Pint, PHPStan (level 7) and the test suite. Run it before every push
 - `composer lint` and `npm run check:fix` auto-fix formatting
 
-Local Postgres defaults are in `.env.example` (`thirty_degres`, and `thirty_degres_test` for tests).
+Local Postgres defaults are in `.env.example` (`witti`, and `witti_test` for tests).
 
 ## Rules for every change
 

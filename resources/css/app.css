@@ -77,7 +77,7 @@
 }
 
 :root {
-    /* Thirty Degres brand palette, taken from the studio identity.
+    /* witti brand palette, carried over from the Thirty Degres studio identity.
        Ink is the deep forest used for text, Mist the page background,
        Green the brand accent and Lime the highlight for active states. */
     --background: #f6f9f7;

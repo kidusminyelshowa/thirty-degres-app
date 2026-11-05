@@ -2,7 +2,7 @@
 
 Researched 14 October 2026 (Linear THI-9). This is a working summary, not legal advice. An Ethiopian lawyer should confirm the Article 22 points before we sign bank, telecom or government clients.
 
-## What counts as personal data in Thirty Degres
+## What counts as personal data in witti
 
 The data laws below protect information about identifiable people. They do not cover company information.
 
@@ -19,7 +19,7 @@ The data laws below protect information about identifiable people. They do not c
 - **Sending data abroad (Arts. 18 to 21):** allowed to countries with adequate protection, or with explicit informed consent from the person, among other grounds. Sending sensitive data abroad needs ECA approval.
 - **Registration (Art. 33):** every controller and processor must register with the ECA. Certificates last two years. The procedure and fees are still waiting on a directive.
 - **Penalties:** fines up to 4% of worldwide turnover. Unlawful cross-border transfer is a criminal offence, with 5 to 10 years in prison and/or ETB 200,000 to 600,000.
-- **Who it binds:** Thirty Degres hosted only in Frankfurt is arguably outside the law's direct reach. Our Ethiopian clients are bound, though, and will pass the obligation to us by contract. Once Thirty Degres operates in Ethiopia, it is directly in scope.
+- **Who it binds:** witti hosted only in Frankfurt is arguably outside the law's direct reach. Our Ethiopian clients are bound, though, and will pass the obligation to us by contract. Once witti operates in Ethiopia, it is directly in scope.
 - **Banks and government:** assume Ethiopian banks will require hosting in Ethiopia and National Bank of Ethiopia sign-off, and that government work will too. We found no published rule that settles this.
 
 ## Kenya: Data Protection Act 2019

@@ -89,7 +89,7 @@ export default function DesignSystem() {
 
                 <Section
                     title="Brand colours"
-                    description="Taken from the Thirty Degres studio identity."
+                    description="Carried over from the Thirty Degres studio identity."
                 >
                     <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
                         {brandColours.map((colour) => (

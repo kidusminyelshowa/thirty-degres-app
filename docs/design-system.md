@@ -4,7 +4,7 @@ Decided 14 October 2026 (Linear THI-27). Colours and type live in `resources/css
 
 ## Colours
 
-The brand palette comes from the Thirty Degres studio identity.
+The brand palette is carried over from the Thirty Degres studio identity, the product's name until November 2026.
 
 | Name  | Hex       | Use                                                |
 | ----- | --------- | -------------------------------------------------- |
