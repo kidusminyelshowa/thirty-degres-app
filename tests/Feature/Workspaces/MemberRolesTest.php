@@ -12,6 +12,7 @@ use App\Notifications\WorkspaceInvitation;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Notification;
 use PHPUnit\Framework\Attributes\DataProvider;
+use Tests\Concerns\CreatesAssets;
 use Tests\Concerns\CreatesWorkspaces;
 use Tests\TestCase;
 
@@ -21,7 +22,7 @@ use Tests\TestCase;
  */
 class MemberRolesTest extends TestCase
 {
-    use CreatesWorkspaces, RefreshDatabase;
+    use CreatesAssets, CreatesWorkspaces, RefreshDatabase;
 
     private Workspace $workspace;
 
@@ -79,6 +80,8 @@ class MemberRolesTest extends TestCase
     #[DataProvider('invitePermissions')]
     public function test_who_can_invite_whom(string $who, string $role, string $kind, bool $allowed)
     {
+        $brand = $this->createBrand($this->workspace);
+
         $response = $this->actingAs($this->person($who)->user)
             ->post(route('workspaces.invitations.store', $this->workspace), [
                 'email' => 'new.person@example.com',
@@ -86,6 +89,8 @@ class MemberRolesTest extends TestCase
                 'kind' => $kind,
                 'partner_organisation' => $kind === 'partner' ? 'Addis Print House' : null,
                 'access_ends_at' => $kind === 'partner' ? now()->addDays(90)->toDateString() : null,
+                'brand_id' => $kind === 'partner' ? $brand->id : null,
+                'brand_role' => $kind === 'partner' ? 'viewer' : null,
             ]);
 
         $allowed ? $response->assertRedirect(route('workspaces.members.index', $this->workspace)) : $response->assertForbidden();
@@ -99,7 +104,7 @@ class MemberRolesTest extends TestCase
             : Notification::assertNothingSent();
     }
 
-    public function test_partner_invitations_need_an_organisation_and_an_end_date()
+    public function test_partner_invitations_need_an_organisation_an_end_date_and_a_brand()
     {
         $this->actingAs($this->owner->user)
             ->post(route('workspaces.invitations.store', $this->workspace), [
@@ -107,7 +112,7 @@ class MemberRolesTest extends TestCase
                 'role' => 'member',
                 'kind' => 'partner',
             ])
-            ->assertSessionHasErrors(['partner_organisation', 'access_ends_at']);
+            ->assertSessionHasErrors(['partner_organisation', 'access_ends_at', 'brand_id', 'brand_role']);
     }
 
     public function test_people_already_in_the_workspace_are_not_invited_again()

@@ -5,6 +5,7 @@ import {
     ChevronRight,
     Pencil,
     Search,
+    Share2,
     Users,
     X,
 } from 'lucide-react';
@@ -46,6 +47,7 @@ import {
     update as updateBrand,
 } from '@/routes/workspaces/brands';
 import { index as brandAccess } from '@/routes/workspaces/brands/access';
+import { index as brandShareLinks } from '@/routes/workspaces/brands/share-links';
 import { index as brandGuidelines } from '@/routes/workspaces/brands/guidelines';
 import type {
     AssetKind,
@@ -73,6 +75,7 @@ type BrandDetails = {
     canUpload: boolean;
     canRename: boolean;
     canManageAccess: boolean;
+    canShare: boolean;
     canAddSubBrand: boolean;
 };
 
@@ -205,6 +208,19 @@ export default function Library({
                                     >
                                         <Users />
                                         {t('Access')}
+                                    </Link>
+                                </Button>
+                            )}
+                            {brand.canShare && (
+                                <Button variant="outline" asChild>
+                                    <Link
+                                        href={brandShareLinks(
+                                            [workspace.slug, brand.id],
+                                            { query: { kind: 'files' } },
+                                        )}
+                                    >
+                                        <Share2 />
+                                        {t('Share')}
                                     </Link>
                                 </Button>
                             )}

@@ -5,6 +5,7 @@ import {
     CheckCircle2,
     Pencil,
     Printer,
+    Share2,
 } from 'lucide-react';
 import {
     BlockView,
@@ -24,6 +25,7 @@ import { Button } from '@/components/ui/button';
 import { pageTitle, useGuidelineFonts } from '@/lib/guidelines';
 import { useTranslation } from '@/lib/i18n';
 import { show as showBrand } from '@/routes/workspaces/brands';
+import { index as brandShareLinks } from '@/routes/workspaces/brands/share-links';
 import {
     edit,
     move,
@@ -61,6 +63,7 @@ type Props = {
         delete: boolean;
         create: boolean;
         setLanguages: boolean;
+        share: boolean;
     };
 };
 
@@ -177,6 +180,23 @@ export default function ShowGuidelinePage({
                                 >
                                     <Printer />
                                 </Button>
+                                {can.share && (
+                                    <Button variant="outline" asChild>
+                                        <Link
+                                            href={brandShareLinks(
+                                                [workspace.slug, brand.id],
+                                                {
+                                                    query: {
+                                                        kind: 'guidelines',
+                                                    },
+                                                },
+                                            )}
+                                        >
+                                            <Share2 />
+                                            {t('Share')}
+                                        </Link>
+                                    </Button>
+                                )}
                                 {can.update && (
                                     <Button variant="outline" asChild>
                                         <Link href={edit(ids)}>

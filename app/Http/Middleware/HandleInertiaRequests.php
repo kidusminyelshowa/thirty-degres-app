@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Localisation\InterfaceLanguages;
 use App\Models\Membership;
 use App\Models\User;
 use App\Tenancy\Tenancy;
@@ -49,6 +50,7 @@ class HandleInertiaRequests extends Middleware
             'workspaces' => fn () => $this->workspaces($request->user()),
             'currentWorkspace' => fn () => $this->currentWorkspace(),
             'locale' => app()->getLocale(),
+            'interfaceLanguages' => InterfaceLanguages::all(),
             'translations' => fn () => $this->translations(),
         ];
     }

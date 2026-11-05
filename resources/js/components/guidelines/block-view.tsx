@@ -214,7 +214,7 @@ function AssetImage({
 function DownloadLink({ asset }: { asset: GuidelineAsset | undefined }) {
     const { t } = useTranslation();
 
-    if (!asset) {
+    if (!asset?.downloadUrl) {
         return null;
     }
 

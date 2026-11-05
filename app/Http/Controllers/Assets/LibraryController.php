@@ -11,6 +11,7 @@ use App\Enums\BrandRoleName;
 use App\Http\Controllers\Controller;
 use App\Models\Asset;
 use App\Models\Brand;
+use App\Models\ShareLink;
 use App\Models\Workspace;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\Request;
@@ -169,6 +170,7 @@ class LibraryController extends Controller
             'canUpload' => Gate::allows('upload', $brand),
             'canRename' => Gate::allows('update', $brand),
             'canManageAccess' => Gate::allows('manageAccess', $brand),
+            'canShare' => Gate::allows('create', [ShareLink::class, $brand]),
             'canAddSubBrand' => $brand->parent_id === null && Gate::allows('create', Brand::class),
         ];
     }

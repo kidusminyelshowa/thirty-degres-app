@@ -3,6 +3,7 @@ import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
 import { Button } from '@/components/ui/button';
 import { Spinner } from '@/components/ui/spinner';
+import { brandRoleLabel } from '@/lib/assets';
 import { useTranslation } from '@/lib/i18n';
 import { roleLabel } from '@/lib/roles';
 import { dashboard, login, logout, register } from '@/routes';
@@ -16,6 +17,8 @@ type Props = {
         email: string;
         role: WorkspaceRole;
         kind: MembershipKind;
+        brandName: string | null;
+        brandRole: 'editor' | 'viewer' | null;
         invitedBy: string | null;
         emailMatches: boolean;
     } | null;
@@ -62,6 +65,19 @@ export default function ShowInvitation({ invitation }: Props) {
                               role: roleLabel(t, invitation.role),
                           })}
                 </p>
+
+                {invitation.brandName && invitation.brandRole && (
+                    <p className="text-center text-sm text-muted-foreground">
+                        {t(
+                            'You will see the brand :brand as :role, and nothing else in :workspace.',
+                            {
+                                brand: invitation.brandName,
+                                role: brandRoleLabel(t, invitation.brandRole),
+                                workspace: invitation.workspaceName,
+                            },
+                        )}
+                    </p>
+                )}
 
                 {!auth.user && (
                     <div className="grid gap-3">

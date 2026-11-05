@@ -16,6 +16,7 @@ declare module '@inertiajs/core' {
             workspaces: WorkspaceSummary[];
             currentWorkspace: CurrentWorkspace | null;
             locale: string;
+            interfaceLanguages: { code: string; native: string }[];
             translations: Record<string, string>;
             [key: string]: unknown;
         };

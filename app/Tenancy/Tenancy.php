@@ -99,6 +99,33 @@ class Tenancy
     }
 
     /**
+     * Let Postgres show the one share link whose secret this request carries.
+     */
+    public function setShareTokenHash(?string $tokenHash): void
+    {
+        $this->setDatabaseSetting('app.share_token_hash', $tokenHash);
+    }
+
+    /**
+     * Continue in the workspace a share link belongs to, with nobody signed
+     * in to it. No membership means every policy says no, so the share
+     * pages read only what the link itself allows.
+     */
+    public function enterForShareLink(string $workspaceId): ?Workspace
+    {
+        $this->membership = null;
+        $this->setDatabaseSetting('app.workspace_id', $workspaceId);
+
+        $this->workspace = Workspace::query()->find($workspaceId);
+
+        if ($this->workspace === null) {
+            $this->leave();
+        }
+
+        return $this->workspace;
+    }
+
+    /**
      * Forget everything, so nothing leaks into the next request or job on a
      * reused database connection.
      */
@@ -112,7 +139,7 @@ class Tenancy
         }
 
         DB::select(
-            "select set_config('app.workspace_id', '', false), set_config('app.user_id', '', false), set_config('app.invitation_token_hash', '', false)"
+            "select set_config('app.workspace_id', '', false), set_config('app.user_id', '', false), set_config('app.invitation_token_hash', '', false), set_config('app.share_token_hash', '', false)"
         );
 
         $this->dirty = false;

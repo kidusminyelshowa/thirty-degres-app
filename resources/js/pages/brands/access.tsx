@@ -185,7 +185,7 @@ function PersonRole({ person, brandId }: { person: Person; brandId: string }) {
                                             <span>
                                                 {brandRoleLabel(t, role)}
                                             </span>
-                                            <span className="text-xs text-muted-foreground">
+                                            <span className="text-xs text-muted-foreground in-data-[slot=select-value]:hidden">
                                                 {brandRoleDescription(t, role)}
                                             </span>
                                         </span>

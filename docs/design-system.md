@@ -38,3 +38,38 @@ Use these terms in every screen so the interface stays consistent. Add new ones 
 | -------- | ------- |
 | Upload   | ጫን      |
 | Download | አውርድ    |
+
+Proposed with the Amharic interface (THI-38), to be confirmed by Kidus. They are used throughout `lang/am.json`; change a word there and here together.
+
+| English        | Amharic        |
+| -------------- | -------------- |
+| Workspace      | የስራ ቦታ         |
+| Brand          | ብራንድ           |
+| Sub-brand      | ንዑስ ብራንድ       |
+| Library        | ማከማቻ           |
+| Guidelines     | መመሪያዎች         |
+| File           | ፋይል            |
+| Draft          | ረቂቅ            |
+| Approve        | አጽድቅ           |
+| Approved       | የጸደቀ           |
+| Archive        | ወደ ማህደር        |
+| Publish        | አትም            |
+| Owner          | ባለቤት           |
+| Admin          | አስተዳዳሪ         |
+| Member         | አባል            |
+| Brand manager  | የብራንድ ኃላፊ      |
+| Editor         | አርታዒ           |
+| Viewer         | ተመልካች          |
+| Partner        | አጋር            |
+| Share          | አጋራ            |
+| Link           | ሊንክ            |
+| Tag            | መለያ            |
+| Logo           | አርማ            |
+| Typeface       | የፊደል ቅርጽ       |
+| Password       | የይለፍ ቃል        |
+| Passkey        | የመግቢያ ቁልፍ      |
+| Two-step login | ባለሁለት ደረጃ መግቢያ |
+
+## Interface language
+
+The app's own screens come in English and Amharic (`config/languages.php`, `interface`). Every text goes through `t()` in React or `__()` in PHP with English as the source; translations live in `lang/am.json`, and `InterfaceTranslationsTest` fails CI if any text is missing one. People switch from the user menu, **Settings > Appearance and language**, the sign-in pages or a shared link. Signed in, the choice is saved on the account and used for their emails; signed out it is kept in a cookie, and before anyone chooses the browser's language decides. When the interface is Amharic the whole page carries `lang="am"`, so the Ge'ez rules above apply everywhere.

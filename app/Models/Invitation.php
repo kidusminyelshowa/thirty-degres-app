@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BrandRoleName;
 use App\Enums\MembershipKind;
 use App\Enums\WorkspaceRole;
 use App\Models\Concerns\BelongsToWorkspace;
@@ -22,6 +23,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property MembershipKind $kind
  * @property string|null $partner_organisation
  * @property CarbonImmutable|null $access_ends_at
+ * @property string|null $brand_id
+ * @property BrandRoleName|null $brand_role
  * @property string $token_hash
  * @property int|null $invited_by
  * @property CarbonImmutable $expires_at
@@ -29,9 +32,10 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property CarbonImmutable|null $created_at
  * @property CarbonImmutable|null $updated_at
  * @property-read User|null $inviter
+ * @property-read Brand|null $brand
  * @property-read Workspace $workspace
  */
-#[Fillable(['email', 'role', 'kind', 'partner_organisation', 'access_ends_at', 'token_hash', 'invited_by', 'expires_at'])]
+#[Fillable(['email', 'role', 'kind', 'partner_organisation', 'access_ends_at', 'brand_id', 'brand_role', 'token_hash', 'invited_by', 'expires_at'])]
 #[Hidden(['token_hash'])]
 class Invitation extends Model
 {
@@ -52,6 +56,16 @@ class Invitation extends Model
         return $this->belongsTo(User::class, 'invited_by');
     }
 
+    /**
+     * The one brand a partner is invited onto, if any.
+     *
+     * @return BelongsTo<Brand, $this>
+     */
+    public function brand(): BelongsTo
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
     public function isPending(): bool
     {
         return $this->accepted_at === null && $this->expires_at->isFuture();
@@ -66,6 +80,7 @@ class Invitation extends Model
             'role' => WorkspaceRole::class,
             'kind' => MembershipKind::class,
             'access_ends_at' => 'datetime',
+            'brand_role' => BrandRoleName::class,
             'expires_at' => 'datetime',
             'accepted_at' => 'datetime',
         ];

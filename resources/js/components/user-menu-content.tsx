@@ -1,5 +1,6 @@
 import { Link, router } from '@inertiajs/react';
-import { LogOut, Settings } from 'lucide-react';
+import { Check, LogOut, Settings } from 'lucide-react';
+import { useInterfaceLanguage } from '@/components/interface-language-switch';
 import {
     DropdownMenuGroup,
     DropdownMenuItem,
@@ -20,6 +21,7 @@ type Props = {
 export function UserMenuContent({ user }: Props) {
     const cleanup = useMobileNavigation();
     const { t } = useTranslation();
+    const languages = useInterfaceLanguage();
 
     const handleLogout = () => {
         cleanup();
@@ -46,6 +48,26 @@ export function UserMenuContent({ user }: Props) {
                         {t('Settings')}
                     </Link>
                 </DropdownMenuItem>
+            </DropdownMenuGroup>
+            <DropdownMenuSeparator />
+            <DropdownMenuGroup aria-label={t('Language')}>
+                {languages.languages.map((language) => (
+                    <DropdownMenuItem
+                        key={language.code}
+                        lang={language.code}
+                        className="cursor-pointer"
+                        onSelect={() => languages.change(language.code)}
+                    >
+                        <Check
+                            className={
+                                languages.current === language.code
+                                    ? 'mr-2'
+                                    : 'invisible mr-2'
+                            }
+                        />
+                        {language.native}
+                    </DropdownMenuItem>
+                ))}
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
